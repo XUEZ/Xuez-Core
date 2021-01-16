@@ -883,6 +883,10 @@ CWalletTx* CWallet::AddToWallet(CTransactionRef tx, const CWalletTx::Confirmatio
             wtx.m_confirm.nIndex = confirm.nIndex;
             wtx.m_confirm.hashBlock = confirm.hashBlock;
             wtx.m_confirm.block_height = confirm.block_height;
+            if (tx->IsCoinStake() && wtx.isUnconfirmed()) {
+                WalletLogPrintf("Abandoning orphaned coinstake %s\n", hash.ToString());
+                AbandonTransaction(hash);
+            }
             fUpdated = true;
         } else {
             assert(wtx.m_confirm.nIndex == confirm.nIndex);
@@ -1645,6 +1649,35 @@ void CWalletTx::GetAmounts(std::list<COutputEntry>& listReceived,
     }
 
     LOCK(pwallet->cs_wallet);
+    // treat coinstake as a single "receive" entry
+    if (IsCoinStake())
+    {
+        for (unsigned int i = 0; i < tx->vout.size(); ++i)
+        {
+            const CTxOut& txout = tx->vout[i];
+            isminetype fIsMine = pwallet->IsMine(txout);
+
+            // get my vout with positive output
+            if (!(fIsMine & filter) || txout.nValue <= 0)
+                continue;
+
+            // get address
+            CTxDestination address = CNoDestination();
+            ExtractDestination(txout.scriptPubKey, address);
+
+            // nfee is negative for coinstake generation, because we are gaining money from it
+            COutputEntry output = {address, -nFee, (int)i};
+            listReceived.push_back(output);
+            nFee = 0;
+            return;
+        }
+
+        // if we reach here there is probably a mistake
+        COutputEntry output = {CNoDestination(), 0, 0};
+        listReceived.push_back(output);
+        return;
+    }
+
     // Sent/received.
     for (unsigned int i = 0; i < tx->vout.size(); ++i)
     {
@@ -1851,8 +1884,12 @@ void CWallet::ReacceptWalletTransactions()
 
         int nDepth = wtx.GetDepthInMainChain();
 
-        if (!wtx.IsCoinBase() && (nDepth == 0 && !wtx.isAbandoned())) {
-            mapSorted.insert(std::make_pair(wtx.nOrderPos, &wtx));
+        if (nDepth == 0 && !wtx.isAbandoned()) {
+            if (wtx.IsCoinBase() || wtx.IsCoinStake()) {
+                WalletLogPrintf("Abandoning orphaned coinbase/coinstake %s\n", wtxid.ToString());
+                AbandonTransaction(wtxid);
+            } else
+                mapSorted.insert(std::make_pair(wtx.nOrderPos, &wtx));
         }
     }
 
@@ -1872,7 +1909,7 @@ bool CWalletTx::SubmitMemoryPoolAndRelay(std::string& err_string, bool relay)
     if (isAbandoned()) return false;
     // Don't try to submit coinbase transactions. These would fail anyway but would
     // cause log spam.
-    if (IsCoinBase()) return false;
+    if (IsCoinBase() || IsCoinStake()) return false;
     // Don't try to submit conflicted or confirmed transactions.
     if (GetDepthInMainChain() != 0) return false;
 
@@ -2511,7 +2548,7 @@ bool CWallet::SignTransaction(CMutableTransaction& tx) const
             return false;
         }
         const CWalletTx& wtx = mi->second;
-        coins[input.prevout] = Coin(wtx.tx->vout[input.prevout.n], wtx.m_confirm.block_height, wtx.IsCoinBase());
+        coins[input.prevout] = Coin(wtx.tx->vout[input.prevout.n], wtx.m_confirm.block_height, wtx.IsCoinBase(), wtx.IsCoinStake());
     }
     std::map<int, std::string> input_errors;
     return SignTransaction(tx, coins, SIGHASH_ALL, input_errors);
@@ -4179,10 +4216,11 @@ int CWalletTx::GetDepthInMainChain() const
 
 int CWalletTx::GetBlocksToMaturity() const
 {
-    if (!IsCoinBase())
+    if (!IsCoinBase() && !IsCoinStake())
         return 0;
     int chain_depth = GetDepthInMainChain();
-    assert(chain_depth >= 0); // coinbase tx should not be conflicted
+    if (!IsCoinStake())
+        assert(chain_depth >= 0); // coinbase tx should not be conflicted
     return std::max(0, (COINBASE_MATURITY+1) - chain_depth);
 }
 
