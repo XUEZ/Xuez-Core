@@ -1523,7 +1523,7 @@ void CChainState::InvalidBlockFound(CBlockIndex *pindex, const BlockValidationSt
 void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txundo, int nHeight)
 {
     // mark inputs spent
-    if (!tx.IsCoinBase()) {
+    if (!tx.IsCoinBase() && (tx.nVersion != 1 || !tx.HasZerocoinSpendInputs())) {
         txundo.vprevout.reserve(tx.vin.size());
         for (const CTxIn &txin : tx.vin) {
             txundo.vprevout.emplace_back();
@@ -1819,7 +1819,7 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
         // Check that all outputs are available and match the outputs in the block itself
         // exactly.
         for (size_t o = 0; o < tx.vout.size(); o++) {
-            if (!tx.vout[o].scriptPubKey.IsUnspendable() && tx.vout[o].nValue != 0 && !tx.vout[o].scriptPubKey.empty()) {
+            if (!tx.vout[o].scriptPubKey.IsUnspendable() && tx.vout[o].nValue != 0 && !tx.vout[o].scriptPubKey.empty() && tx.vout[o].scriptPubKey[0] != 0xc1) { // OP_ZEROCOINMINT
                 COutPoint out(hash, o);
                 Coin coin;
                 bool is_spent = view.SpendCoin(out, &coin);
@@ -1834,7 +1834,7 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
         }
 
         // restore inputs
-        if (i > 0) { // not coinbases
+        if (i > 0 && (tx.nVersion != 1 || !tx.HasZerocoinSpendInputs())) { // not coinbases
             CTxUndo &txundo = blockUndo.vtxundo[i-1];
             if (txundo.vprevout.size() != tx.vin.size()) {
                 error("DisconnectBlock(): transaction and undo data inconsistent");
@@ -2319,6 +2319,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     CAmount nFees = 0;
     CAmount nValueIn = 0;
     CAmount nValueOut = 0;
+    CAmount nZerocoinSpent = 0;
     CAmount nAmountBurned = 0;
     uint64_t nCoinAge = 0;
     int nInputs = 0;
@@ -2330,7 +2331,8 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
 
         nInputs += tx.vin.size();
 
-        if (!tx.IsCoinBase())
+        const bool fZerocoinSpend = tx.nVersion == 1 && tx.HasZerocoinSpendInputs();
+        if (!tx.IsCoinBase() && !fZerocoinSpend)
         {
             CAmount txfee = 0;
             TxValidationState tx_state;
@@ -2361,10 +2363,12 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
                 LogPrintf("ERROR: %s: contains a non-BIP68-final transaction\n", __func__);
                 return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-nonfinal");
             }
+        } else if (fZerocoinSpend) {
+            nZerocoinSpent += tx.GetValueOut();
         }
         nValueOut += tx.GetValueOut();
         for (const CTxOut& tx_out : tx.vout) {
-            if (tx_out.scriptPubKey.IsUnspendable() || tx_out.scriptPubKey.empty())
+            if (tx_out.scriptPubKey.IsUnspendable() || tx_out.scriptPubKey.empty() || tx_out.scriptPubKey[0] == 0xc1) // OP_ZEROCOINMINT
                 nAmountBurned += tx_out.nValue;
         }
 
@@ -2378,7 +2382,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
             return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-blk-sigops");
         }
 
-        if (!tx.IsCoinBase())
+        if (!tx.IsCoinBase() && !fZerocoinSpend)
         {
             std::vector<CScriptCheck> vChecks;
             bool fCacheResults = fJustCheck; /* Don't cache results if we're actually connecting blocks (still consult the cache, though) */
@@ -2402,7 +2406,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     int64_t nTime3 = GetTimeMicros(); nTimeConnect += nTime3 - nTime2;
     LogPrint(BCLog::BENCH, "      - Connect %u transactions: %.2fms (%.3fms/tx, %.3fms/txin) [%.2fs (%.2fms/blk)]\n", (unsigned)block.vtx.size(), MILLI * (nTime3 - nTime2), MILLI * (nTime3 - nTime2) / block.vtx.size(), nInputs <= 1 ? 0 : MILLI * (nTime3 - nTime2) / (nInputs-1), nTimeConnect * MICRO, nTimeConnect * MILLI / nBlocksTotal);
 
-    const CAmount nActualBlockReward = nFees + nValueOut - nValueIn;
+    const CAmount nActualBlockReward = nFees + nValueOut - nValueIn - nZerocoinSpent;
     CAmount nExpectedBlockReward = GetBlockSubsidy(pindex->nHeight, fProofOfStake, nCoinAge, chainparams.GetConsensus());
     CAmount nTreasuryPayment = GetTreasuryPayment(pindex->nHeight, chainparams.GetConsensus());
 
@@ -2451,7 +2455,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
 
     // peercoin: track money supply and mint amount info
     pindex->nMint = nActualBlockReward;
-    pindex->nMoneySupply = (pindex->pprev ? pindex->pprev->nMoneySupply : 0) + pindex->nMint - nAmountBurned;
+    pindex->nMoneySupply = (pindex->pprev ? pindex->pprev->nMoneySupply : 0) + pindex->nMint + nZerocoinSpent - nAmountBurned;
     pindex->nTreasuryPayment = nTreasuryPayment;
     //LogPrintf("ConnectBlock(): INFO: nValueOut: %s, nValueIn: %s, nFees: %s, nMint: %s\n", FormatMoney(nValueOut), FormatMoney(nValueIn), FormatMoney(nFees), FormatMoney(pindex->nMint));
 

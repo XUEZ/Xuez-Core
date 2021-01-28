@@ -67,7 +67,7 @@ bool CCoinsViewCache::GetCoin(const COutPoint &outpoint, Coin &coin) const {
 
 void CCoinsViewCache::AddCoin(const COutPoint &outpoint, Coin&& coin, bool possible_overwrite) {
     assert(!coin.IsSpent());
-    if (coin.out.scriptPubKey.IsUnspendable() || coin.out.nValue == 0 || coin.out.scriptPubKey.empty()) return;
+    if (coin.out.scriptPubKey.IsUnspendable() || coin.out.nValue == 0 || coin.out.scriptPubKey.empty() || coin.out.scriptPubKey[0] == 0xc1) return; // OP_ZEROCOINMINT
     CCoinsMap::iterator it;
     bool inserted;
     std::tie(it, inserted) = cacheCoins.emplace(std::piecewise_construct, std::forward_as_tuple(outpoint), std::tuple<>());

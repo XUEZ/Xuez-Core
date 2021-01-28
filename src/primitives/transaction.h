@@ -107,6 +107,11 @@ public:
 
     SERIALIZE_METHODS(CTxIn, obj) { READWRITE(obj.prevout, obj.scriptSig, obj.nSequence); }
 
+    bool IsZerocoinSpend() const
+    {
+        return prevout.IsNull() && scriptSig.size() >= 18000 && scriptSig[0] == 0xc2; // OP_ZEROCOINSPEND
+    }
+
     friend bool operator==(const CTxIn& a, const CTxIn& b)
     {
         return (a.prevout   == b.prevout &&
@@ -332,9 +337,18 @@ public:
      */
     unsigned int GetTotalSize() const;
 
+    bool HasZerocoinSpendInputs() const
+    {
+        for (const CTxIn& txin : vin) {
+            if (txin.IsZerocoinSpend())
+                return true;
+        }
+        return false;
+    }
+
     bool IsCoinBase() const
     {
-        return (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() >= 1);
+        return (vin.size() == 1 && vin[0].prevout.IsNull() && vout.size() >= 1 && (nVersion != 1 || !HasZerocoinSpendInputs()));
     }
 
     bool IsCoinStake() const

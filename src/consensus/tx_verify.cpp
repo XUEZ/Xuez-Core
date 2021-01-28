@@ -140,7 +140,7 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
 {
     int64_t nSigOps = GetLegacySigOpCount(tx) * WITNESS_SCALE_FACTOR;
 
-    if (tx.IsCoinBase())
+    if (tx.IsCoinBase() || (tx.nVersion == 1 && tx.HasZerocoinSpendInputs()))
         return nSigOps;
 
     if (flags & SCRIPT_VERIFY_P2SH) {
