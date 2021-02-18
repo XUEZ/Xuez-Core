@@ -144,6 +144,7 @@ db4/
 
 # clang-check
 *.plist
+!contrib/init/org.bitcoin.bitcoind.plist
 
 osx_volname
 dist/
