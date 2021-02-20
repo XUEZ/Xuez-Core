@@ -247,6 +247,15 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
 {
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
 
+	// Load block file info
+	int64_t nLastBlockHeight = 0, ct = 0, cct = 0;
+	int LastBlock;
+	CBlockFileInfo info;
+    ReadLastBlockFile( LastBlock );
+    if( ReadBlockFileInfo( LastBlock, info ) ){
+		nLastBlockHeight = info.nHeightLast;
+	}
+	
     pcursor->Seek(std::make_pair(DB_BLOCK_INDEX, uint256()));
 
     // Load m_block_index
@@ -271,8 +280,18 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->nAccumulatorCheckpoint = diskindex.nAccumulatorCheckpoint;
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
-
-                // peercoin related block index fields
+				if ( nLastBlockHeight > 0 ){
+					ct++;
+					double dPercent = ct / (double)nLastBlockHeight;
+					if ( cct < fmin( (int)(dPercent * 100), 100 ) ){
+						if ( cct % 5 == 0 ){
+							LogPrintf( "Loading block index [%d%%]\n", cct );
+						}
+						uiInterface.ShowProgress( _("Loading block index...").translated, (int)(cct), false );
+						cct = fmin( (int)(dPercent * 100), 100 );
+					}
+				}
+							// peercoin related block index fields
                 pindexNew->nMint          = diskindex.nMint;
                 pindexNew->nMoneySupply   = diskindex.nMoneySupply;
                 pindexNew->nFlags         = diskindex.nFlags;
