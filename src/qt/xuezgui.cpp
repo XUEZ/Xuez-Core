@@ -552,12 +552,17 @@ void XUEZGUI::createToolBars()
         appToolBar = toolbar;
         toolbar->setContextMenuPolicy(Qt::PreventContextMenu);
         toolbar->setMovable(false);
-        toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
         toolbar->addAction(overviewAction);
         toolbar->addAction(sendCoinsAction);
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
         overviewAction->setChecked(true);
+		toolbar->setStyleSheet( QStringLiteral(
+        "QToolBar { background-color: #2e3684; border:none }"
+        "QToolButton { min-width:100px;font-weight:bold;font-size: 14px;border:none;color:white }"
+        "QToolButton:hover, QToolButton:pressed, QToolButton:checked { background-color:#6d72a9;border:none;opacity:20 }"
+        ));
 
 #ifdef ENABLE_WALLET
         QWidget *spacer = new QWidget();
