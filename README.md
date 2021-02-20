@@ -1,80 +1,44 @@
-XUEZ Core integration/staging tree
+XUEZ Core version 2 integration/staging tree
 =====================================
 
-https://bitcoincore.org
 
-What is XUEZ?
-----------------
+XUEZ is a peer to peer digital asset, with the mission of building and providing an open platform where privacy and anonymity are prioritized and valued as they are a fundamental human right. These rights are recognized in the Universal Declaration of Human Rights, The International Convention on Civil and Political right and in many other international and regional treaties.
 
-XUEZ is an experimental digital currency that enables instant payments to
-anyone, anywhere in the world. XUEZ uses peer-to-peer technology to operate
-with no central authority: managing transactions and issuing money are carried
-out collectively by the network. XUEZ Core is the name of open source
-software which enables the use of this currency.
+The XUEZ protocol is being specifically designed, not only to address the inherent problems plaguing Bitcoin and other cryptocurrencies, but also to build and disrupt central entities through our distribution phase, while building the next-generation decentralised information infrastructure.
 
-For more information, as well as an immediately usable, binary version of
-the XUEZ Core software, see https://bitcoincore.org/en/download/, or read the
-[original whitepaper](https://bitcoincore.org/bitcoin.pdf).
+- Anonymized transactions using coin mixing technology, we call it _Xend_.
+- Fast transactions featuring guaranteed zero confirmation transactions (_SwiftTX_).
+- Current Masternode technology used to secure the network and provide the above features, each Masternode is secured with a collateral of 1000 XUEZ.
 
-License
--------
+More information at [http://www.xuezcoin.com](http://www.xuezcoin.com)
 
-XUEZ Core is released under the terms of the MIT license. See [COPYING](COPYING) for more
-information or see https://opensource.org/licenses/MIT.
+### Coin Specs
+| Algo                         | Xevan              |
+|------------------------------|--------------------|
+| Block Time                   | 60 Seconds         |
+| Difficulty Retargeting       | Every Block        |
+| Max Coin Supply (All Phases) | 21M XUEZ           |
+| XIOS swap coins              | 2,446,202 XUEZ*    |
 
-Development Process
--------------------
+Wallet Port: 41798, RPC Port: 41799
 
-The `master` branch is regularly built (see `doc/build-*.md` for instructions) and tested, but it is not guaranteed to be
-completely stable. [Tags](https://github.com/bitcoin/bitcoin/tags) are created
-regularly from release branches to indicate new official, stable release versions of XUEZ Core.
+#### PoW Mining
 
-The https://github.com/bitcoin-core/gui repository is used exclusively for the
-development of the GUI. Its master branch is identical in all monotree
-repositories. Release branches and tags do not exist, so please do not fork
-that repository unless it is for development reasons.
+|  **Amount**             | **Notes**                |
+|-------------------------|--------------------------|
+| 2,446,202 XUEZ          | Initial XIOS swap 0 Day  |
 
-The contribution workflow is described in [CONTRIBUTING.md](CONTRIBUTING.md)
-and useful hints for developers can be found in [doc/developer-notes.md](doc/developer-notes.md).
+### Rewards Breakdown PoW blocks 151-43200, PoS blocks 43201 - end
 
-Testing
--------
-
-Testing and code review is the bottleneck for development; we get more pull
-requests than we can review and test on short notice. Please be patient and help out by testing
-other people's pull requests, and remember this is a security-critical project where any mistake might cost people
-lots of money.
-
-### Automated Testing
-
-Developers are strongly encouraged to write [unit tests](src/test/README.md) for new code, and to
-submit new unit tests for old code. Unit tests can be compiled and run
-(assuming they weren't disabled in configure) with: `make check`. Further details on running
-and extending unit tests can be found in [/src/test/README.md](/src/test/README.md).
-
-There are also [regression and integration tests](/test), written
-in Python, that are run automatically on the build server.
-These tests can be run (if the [test dependencies](/test) are installed) with: `test/functional/test_runner.py`
-
-The Travis CI system makes sure that every pull request is built for Windows, Linux, and macOS, and that unit/sanity tests are run automatically.
-
-### Manual Quality Assurance (QA) Testing
-
-Changes should be tested by somebody other than the developer who wrote the
-code. This is especially important for large or high-risk changes. It is useful
-to add a test plan to the pull request description if testing the changes is
-not straightforward.
-
-Translations
-------------
-
-Changes to translations as well as new translations can be submitted to
-[XUEZ Core's Transifex page](https://www.transifex.com/xuez/xuez/).
-
-Translations are periodically pulled from Transifex and merged into the git repository. See the
-[translation process](doc/translation_process.md) for details on how this works.
-
-**Important**: We do not accept translation changes as GitHub pull requests because the next
-pull from Transifex would automatically overwrite them again.
-
-Translators should also subscribe to the [mailing list](https://groups.google.com/forum/#!forum/xuez-translators).
+| **Block Height**       | **Masternodes**    | **PoW/PoS**               | **Budget**               |
+|----------------------------|---------------------------|---------------------------|----------------------------|
+| 1 - 150                     | swap/premine         | --                             | --                              |
+| 151- 525600            | 60% ( 1.5 XUEZ)    | 30% (0.75 XUEZ)    | 10% (0.15 XUEZ)*   |
+| 525601-1051200     | 60% (0.93 XUEZ)   | 30% (0.465 XUEZ)  | 10% (0.155 XUEZ)* |
+| 1051201-1576800   | 60% (0.576 XUEZ) | 30% (0.288 XUEZ)  | 10% (0.096 XUEZ)* |
+| 1576801-2628000   | 60% (0.354 XUEZ) | 30% (0.177 XUEZ)  | 10% (0.059 XUEZ)* |
+| 2628001-4204800   | 60% (0.222 XUEZ) | 30% (0.111 XUEZ)  | 10% (0.037 XUEZ)* |
+| 4204801-6832800   | 60% (0.138 XUEZ) | 30% (0.069 XUEZ)  | 10% (0.023 XUEZ)* |
+| 6832801-11037600 | 60% (0.084 XUEZ) | 30% (0.042 XUEZ)  | 10% (0.014 XUEZ)* |
+| 11037601 -              | 60% (0.06 XUEZ)   | 30% (0.03  XUEZ)  | 10% (0.01 XUEZ)*    |
+* budget values reduced from PoS when active
