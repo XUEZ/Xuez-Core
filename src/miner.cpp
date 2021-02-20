@@ -717,7 +717,7 @@ static inline bool ProcessBlockFound(const CBlock* pblock, const CChainParams& c
 
     // Found a solution
     if (pblock->hashPrevBlock != ::ChainActive().Tip()->GetBlockHash())
-        return error("BitcoinMiner: generated block is stale");
+        return error("XUEZMiner: generated block is stale");
 
     // Process this block the same as if we had received it from another node
     std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(*pblock);
@@ -822,7 +822,7 @@ static inline void PoSMiner(std::shared_ptr<CWallet> pwallet, ChainstateManager*
                 }
                 SetMintWarning(strMintBlockMessage);
                 uiInterface.NotifyAlertChanged();
-                LogPrintf("Error in BitcoinMiner: Keypool ran out, please call keypoolrefill before restarting the staking thread\n");
+                LogPrintf("Error in XUEZMiner: Keypool ran out, please call keypoolrefill before restarting the staking thread\n");
                 if (!connman->interruptNet.sleep_for(std::chrono::seconds(10)))
                    return;
 
@@ -861,11 +861,11 @@ static inline void PoSMiner(std::shared_ptr<CWallet> pwallet, ChainstateManager*
             continue;
         }
     } catch (boost::thread_interrupted) {
-        LogPrintf("BitcoinMiner terminated\n");
+        LogPrintf("XUEZMiner terminated\n");
         return;
         // throw;
     } catch (const std::runtime_error &e) {
-        LogPrintf("BitcoinMiner runtime error: %s\n", e.what());
+        LogPrintf("XUEZMiner runtime error: %s\n", e.what());
         return;
     }
 }
@@ -873,7 +873,7 @@ static inline void PoSMiner(std::shared_ptr<CWallet> pwallet, ChainstateManager*
 // peercoin: stake minter thread
 static void ThreadStakeMinter(std::shared_ptr<CWallet> pwallet, const unsigned int walletNum, ChainstateManager* chainman, CConnman* connman, CTxMemPool* mempool)
 {
-    util::ThreadRename("bitcoin-stake-minter-" + std::to_string(walletNum));
+    util::ThreadRename("xuez-stake-minter-" + std::to_string(walletNum));
     LogPrintf("ThreadStakeMinter #%u started\n", walletNum);
     try {
         PoSMiner(pwallet, chainman, connman, mempool);
