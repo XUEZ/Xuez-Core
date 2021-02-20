@@ -2676,6 +2676,8 @@ void PeerManager::ProcessMessage(CNode& pfrom, const std::string& msg_type, CDat
         const auto current_time = GetTime<std::chrono::microseconds>();
         uint256* best_block{nullptr};
 
+        std::vector<CInv> vToFetch; // Remove this code once migration to new codebase is complete
+
         for (CInv& inv : vInv) {
             if (interruptMsgProc) return;
 
@@ -2700,6 +2702,7 @@ void PeerManager::ProcessMessage(CNode& pfrom, const std::string& msg_type, CDat
                     // provided should be the highest, so send a getheaders and
                     // then fetch the blocks we need to catch up.
                     best_block = &inv.hash;
+                    vToFetch.push_back(inv);
                 }
             } else if (inv.IsGenTxMsg()) {
                 const GenTxid gtxid = ToGenTxid(inv);
@@ -2720,8 +2723,13 @@ void PeerManager::ProcessMessage(CNode& pfrom, const std::string& msg_type, CDat
         }
 
         if (best_block != nullptr) {
-            m_connman.PushMessage(&pfrom, msgMaker.Make(NetMsgType::GETHEADERS, ::ChainActive().GetLocator(pindexBestHeader), *best_block));
-            LogPrint(BCLog::NET, "getheaders (%d) %s to peer=%d\n", pindexBestHeader->nHeight, best_block->ToString(), pfrom.GetId());
+            if (pfrom.nVersion != 70960) {
+                m_connman.PushMessage(&pfrom, msgMaker.Make(NetMsgType::GETHEADERS, ::ChainActive().GetLocator(pindexBestHeader), *best_block));
+                LogPrint(BCLog::NET, "getheaders (%d) %s to peer=%d\n", pindexBestHeader->nHeight, best_block->ToString(), pfrom.GetId());
+            } else if (vToFetch.size()) {
+                m_connman.PushMessage(&pfrom, msgMaker.Make(NetMsgType::GETDATA, vToFetch));
+                LogPrint(BCLog::NET, "getdata (%d) %s to peer=%d\n", pindexBestHeader->nHeight, best_block->ToString(), pfrom.GetId());
+            }
         }
 
         return;
@@ -3494,6 +3502,17 @@ void PeerManager::ProcessMessage(CNode& pfrom, const std::string& msg_type, CDat
         vRecv >> *pblock;
 
         LogPrint(BCLog::NET, "received block %s peer=%d\n", pblock->GetHash().ToString(), pfrom.GetId());
+
+        if (pfrom.nVersion == 70960) { // Remove this code once migration to new codebase is complete
+            LOCK(cs_main);
+
+            const CBlockIndex* pindexPrev = LookupBlockIndex(pblock->hashPrevBlock);
+            if (!pindexPrev) {
+                m_connman.PushMessage(&pfrom, msgMaker.Make(NetMsgType::GETBLOCKS, ::ChainActive().GetLocator(pindexBestHeader), pblock->GetHash()));
+                LogPrint(BCLog::NET, "getblocks (%d) %s to peer=%d\n", pindexBestHeader->nHeight, pblock->GetHash().ToString(), pfrom.GetId());
+                return;
+            }
+        }
 
         bool forceProcessing = false;
         const uint256 hash(pblock->GetHash());
