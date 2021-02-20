@@ -1434,7 +1434,7 @@ void PrecomputedTransactionData::Init(const T& txTo, std::vector<CTxOut>&& spent
     bool uses_bip143_segwit = false;
     bool uses_bip341_taproot = false;
     for (size_t inpos = 0; inpos < txTo.vin.size(); ++inpos) {
-        if (!txTo.vin[inpos].scriptWitness.IsNull()) {
+        if (static_cast<uint32_t>(txTo.nVersion) >= 2 || !txTo.vin[inpos].scriptWitness.IsNull()) {
             if (m_spent_outputs_ready && m_spent_outputs[inpos].scriptPubKey.size() == 2 + WITNESS_V1_TAPROOT_SIZE &&
                 m_spent_outputs[inpos].scriptPubKey[0] == OP_1) {
                 // Treat every witness-bearing spend with 34-byte scriptPubKey that starts with OP_1 as a Taproot
@@ -1578,7 +1578,7 @@ uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn
 {
     assert(nIn < txTo.vin.size());
 
-    if (sigversion == SigVersion::WITNESS_V0) {
+    if (sigversion == SigVersion::WITNESS_V0 || (sigversion == SigVersion::BASE && static_cast<uint32_t>(txTo.nVersion) >= 2)) {
         uint256 hashPrevouts;
         uint256 hashSequence;
         uint256 hashOutputs;
