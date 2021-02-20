@@ -8,16 +8,39 @@
 #include <primitives/block.h>
 
 #include <hash.h>
+#include <streams.h>
 #include <tinyformat.h>
 
 uint256 CBlockHeader::GetHash() const
 {
-    return SerializeHash(*this);
+    if (nVersion > 4)
+        return SerializeHash(*this);
+    else if (nVersion == 4) {
+        std::vector<unsigned char> vch(112); // block header size with accumulator checkpoint
+        CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
+        ss << *this;
+        return HashXevan(vch);
+    } else {
+        std::vector<unsigned char> vch(80); // block header size in bytes
+        CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
+        ss << *this;
+        return HashXevan(vch);
+    }
 }
 
 uint256 CBlockHeader::GetPoWHash() const
 {
-    return SerializeHash(*this);
+    if (nVersion != 4) {
+        std::vector<unsigned char> vch(80); // block header size in bytes
+        CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
+        ss << *this;
+        return HashXevan(vch);
+    } else {
+        std::vector<unsigned char> vch(112); // block header size with accumulator checkpoint
+        CVectorWriter ss(SER_NETWORK, PROTOCOL_VERSION, vch, 0);
+        ss << *this;
+        return HashXevan(vch);
+    }
 }
 
 std::string CBlock::ToString() const

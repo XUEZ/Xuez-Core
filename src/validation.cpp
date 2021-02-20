@@ -3755,7 +3755,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-diffbits", "incorrect difficulty target");
 
     // Reject new PoW algorithms until they have been activated
-    if (nHeight >= 1 && CBlockHeader::GetAlgo(block.nVersion) > CBlockHeader::ALGO_POW_SHA256)
+    if (nHeight >= 1 && CBlockHeader::GetAlgo(block.nVersion) > CBlockHeader::ALGO_POW_XEVAN)
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "new-algo", "block using new algo before activation");
 
     // Check against checkpoints

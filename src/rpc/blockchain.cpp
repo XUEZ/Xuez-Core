@@ -130,6 +130,8 @@ UniValue blockheaderToJSON(const CBlockIndex* tip, const CBlockIndex* blockindex
     result.pushKV("version", (uint64_t)blockindex->nVersion);
     result.pushKV("versionHex", strprintf("%08x", blockindex->nVersion));
     result.pushKV("merkleroot", blockindex->hashMerkleRoot.GetHex());
+    if (blockindex->nVersion == 4)
+        result.pushKV("acc_checkpoint", blockindex->nAccumulatorCheckpoint.GetHex());
     result.pushKV("time", (int64_t)blockindex->nTime);
     result.pushKV("mediantime", (int64_t)blockindex->GetMedianTimePast());
     result.pushKV("nonce", (uint64_t)blockindex->nNonce);
@@ -162,6 +164,8 @@ UniValue blockToJSON(const CBlock& block, const CBlockIndex* tip, const CBlockIn
     result.pushKV("version", (uint64_t)block.nVersion);
     result.pushKV("versionHex", strprintf("%08x", block.nVersion));
     result.pushKV("merkleroot", block.hashMerkleRoot.GetHex());
+    if (block.nVersion == 4)
+        result.pushKV("acc_checkpoint", block.nAccumulatorCheckpoint.GetHex());
     UniValue txs(UniValue::VARR);
     for(const auto& tx : block.vtx)
     {

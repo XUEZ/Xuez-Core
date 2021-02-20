@@ -51,7 +51,7 @@ static inline const CBlockIndex* GetASERTReferenceBlockAndHeightForAlgo(const CB
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
     const int algo = CBlockHeader::GetAlgo(pblock->nVersion);
-    const uint32_t nProofOfWorkLimit = UintToArith256(params.powLimit[algo == -1 ? CBlockHeader::ALGO_POW_SHA256 : algo]).GetCompact();
+    const uint32_t nProofOfWorkLimit = UintToArith256(params.powLimit[algo == -1 ? CBlockHeader::ALGO_POW_XEVAN : algo]).GetCompact();
     if (pindexLast == nullptr || params.fPowNoRetargeting)
         return nProofOfWorkLimit;
 
@@ -84,7 +84,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
 unsigned int GetNextWorkRequiredBTC(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
     assert(pindexLast != nullptr);
-    unsigned int nProofOfWorkLimit = UintToArith256(params.powLimit[CBlockHeader::ALGO_POW_SHA256]).GetCompact();
+    unsigned int nProofOfWorkLimit = UintToArith256(params.powLimit[CBlockHeader::ALGO_POW_XEVAN]).GetCompact();
 
     // Only change once per difficulty adjustment interval
     if ((pindexLast->nHeight+1) % params.DifficultyAdjustmentInterval() != 0)
@@ -130,7 +130,7 @@ unsigned int CalculateNextWorkRequired(const CBlockIndex* pindexLast, int64_t nF
         nActualTimespan = params.nPowTargetTimespan*4;
 
     // Retarget
-    const arith_uint256 bnPowLimit = UintToArith256(params.powLimit[CBlockHeader::ALGO_POW_SHA256]);
+    const arith_uint256 bnPowLimit = UintToArith256(params.powLimit[CBlockHeader::ALGO_POW_XEVAN]);
     arith_uint256 bnNew;
     bnNew.SetCompact(pindexLast->nBits);
     bnNew *= nActualTimespan;
@@ -146,7 +146,7 @@ unsigned int WeightedTargetExponentialMovingAverage(const CBlockIndex* pindexLas
 {
     const int algo = CBlockHeader::GetAlgo(pblock->nVersion);
     const bool fProofOfStake = pblock->IsProofOfStake();
-    const arith_uint256 bnPowLimit = algo == -1 ? UintToArith256(params.powLimit[fProofOfStake ? CBlockHeader::ALGO_POS : CBlockHeader::ALGO_POW_SHA256]) : UintToArith256(params.powLimit[algo]);
+    const arith_uint256 bnPowLimit = algo == -1 ? UintToArith256(params.powLimit[fProofOfStake ? CBlockHeader::ALGO_POS : CBlockHeader::ALGO_POW_XEVAN]) : UintToArith256(params.powLimit[algo]);
     const uint32_t nProofOfWorkLimit = bnPowLimit.GetCompact();
     if (pindexLast == nullptr)
         return nProofOfWorkLimit; // genesis block
@@ -193,7 +193,7 @@ unsigned int AverageTargetASERT(const CBlockIndex* pindexLast, const CBlockHeade
 {
     const int algo = CBlockHeader::GetAlgo(pblock->nVersion);
     const bool fProofOfStake = pblock->IsProofOfStake();
-    const arith_uint256 bnPowLimit = algo == -1 ? UintToArith256(params.powLimit[fProofOfStake ? CBlockHeader::ALGO_POS : CBlockHeader::ALGO_POW_SHA256]) : UintToArith256(params.powLimit[algo]);
+    const arith_uint256 bnPowLimit = algo == -1 ? UintToArith256(params.powLimit[fProofOfStake ? CBlockHeader::ALGO_POS : CBlockHeader::ALGO_POW_XEVAN]) : UintToArith256(params.powLimit[algo]);
     const uint32_t nProofOfWorkLimit = bnPowLimit.GetCompact();
     uint32_t nTargetSpacing = params.nPowTargetSpacing;
     //nTargetSpacing *= 2; // 160 second block time for PoW + 160 second block time for PoS = 80 second effective block time
@@ -368,7 +368,7 @@ bool CheckProofOfWork(const uint256& hash, const unsigned int& nBits, const int&
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
 
     // Check range
-    if (fNegative || bnTarget == 0 || fOverflow || algo < -1 || algo == CBlockHeader::ALGO_POS || algo >= CBlockHeader::ALGO_COUNT || bnTarget > UintToArith256(params.powLimit[algo == -1 ? CBlockHeader::ALGO_POW_SHA256 : algo]))
+    if (fNegative || bnTarget == 0 || fOverflow || algo < -1 || algo == CBlockHeader::ALGO_POS || algo >= CBlockHeader::ALGO_COUNT || bnTarget > UintToArith256(params.powLimit[algo == -1 ? CBlockHeader::ALGO_POW_XEVAN : algo]))
         return false;
 
     // Check proof of work matches claimed amount

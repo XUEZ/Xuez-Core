@@ -97,7 +97,7 @@ public:
         consensus.SegwitHeight = 481824; // 0000000000000000001c8018d9cb3b742ef25114f27563e3fc4a1902167f9893
         consensus.MinBIP9WarningHeight = 483840; // segwit activation height + miner confirmation window
         consensus.powLimit[CBlockHeader::ALGO_POS] = uint256S("00000fffff000000000000000000000000000000000000000000000000000000"); // 0x1e0fffff
-        consensus.powLimit[CBlockHeader::ALGO_POW_SHA256] = uint256S("00000000ffff0000000000000000000000000000000000000000000000000000"); // 0x1d00ffff
+        consensus.powLimit[CBlockHeader::ALGO_POW_XEVAN] = uint256S("00000000ffff0000000000000000000000000000000000000000000000000000"); // 0x1d00ffff
         consensus.nPowTargetTimespan = 12 * 60 * 60; // 12 hours
         consensus.nPowTargetSpacing = 80; // 80-second block spacing - must be divisible by (nStakeTimestampMask+1)
         consensus.nStakeTimestampMask = 0xf; // 16 second time slots
@@ -139,7 +139,7 @@ public:
         m_assumed_blockchain_size = 350;
         m_assumed_chain_state_size = 6;
 
-        genesis = CreateGenesisBlock(1231006505, 2083236893, UintToArith256(consensus.powLimit[CBlockHeader::ALGO_POW_SHA256]).GetCompact(), 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1231006505, 2083236893, UintToArith256(consensus.powLimit[CBlockHeader::ALGO_POW_XEVAN]).GetCompact(), 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         //printf("Merkle hash mainnet: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         //printf("Genesis hash mainnet: %s\n", consensus.hashGenesisBlock.ToString().c_str());
@@ -226,7 +226,7 @@ public:
         consensus.SegwitHeight = 834624; // 00000000002b980fcd729daaa248fd9316a5200e9b367f4ff2c42453e84201ca
         consensus.MinBIP9WarningHeight = 836640; // segwit activation height + miner confirmation window
         consensus.powLimit[CBlockHeader::ALGO_POS] = uint256S("00000fffff000000000000000000000000000000000000000000000000000000"); // 0x1e0fffff
-        consensus.powLimit[CBlockHeader::ALGO_POW_SHA256] = uint256S("00000000ffff0000000000000000000000000000000000000000000000000000"); // 0x1d00ffff
+        consensus.powLimit[CBlockHeader::ALGO_POW_XEVAN] = uint256S("00000000ffff0000000000000000000000000000000000000000000000000000"); // 0x1d00ffff
         consensus.nPowTargetTimespan = 12 * 60 * 60; // 12 hours
         consensus.nPowTargetSpacing = 80; // 80-second block spacing - must be divisible by (nStakeTimestampMask+1)
         consensus.nStakeTimestampMask = 0xf; // 16 second time slots
@@ -263,7 +263,7 @@ public:
         m_assumed_blockchain_size = 40;
         m_assumed_chain_state_size = 2;
 
-        genesis = CreateGenesisBlock(1296688602, 414098458, UintToArith256(consensus.powLimit[CBlockHeader::ALGO_POW_SHA256]).GetCompact(), 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1296688602, 414098458, UintToArith256(consensus.powLimit[CBlockHeader::ALGO_POW_XEVAN]).GetCompact(), 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         //printf("Merkle hash testnet: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         //printf("Genesis hash testnet: %s\n", consensus.hashGenesisBlock.ToString().c_str());
@@ -385,7 +385,7 @@ public:
         consensus.nTreasuryPaymentsCycleBlocks = 1 * 24 * 60 * 60 / consensus.nPowTargetSpacing; // Once per day
         consensus.MinBIP9WarningHeight = 0;
         consensus.powLimit[CBlockHeader::ALGO_POS] = uint256S("00000fffff000000000000000000000000000000000000000000000000000000"); // 0x1e0fffff
-        consensus.powLimit[CBlockHeader::ALGO_POW_SHA256] = uint256S("00000377ae000000000000000000000000000000000000000000000000000000"); // 0x1e0377ae
+        consensus.powLimit[CBlockHeader::ALGO_POW_XEVAN] = uint256S("00000377ae000000000000000000000000000000000000000000000000000000"); // 0x1e0377ae
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
@@ -407,7 +407,7 @@ public:
         nDefaultPort = 38333;
         nPruneAfterHeight = 1000;
 
-        genesis = CreateGenesisBlock(1598918400, 52613770, UintToArith256(consensus.powLimit[CBlockHeader::ALGO_POW_SHA256]).GetCompact(), 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1598918400, 52613770, UintToArith256(consensus.powLimit[CBlockHeader::ALGO_POW_XEVAN]).GetCompact(), 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         //printf("Merkle hash signet: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         //printf("Genesis hash signet: %s\n", consensus.hashGenesisBlock.ToString().c_str());
@@ -454,7 +454,7 @@ public:
         consensus.SegwitHeight = 0; // SEGWIT is always activated on regtest unless overridden
         consensus.MinBIP9WarningHeight = 0;
         consensus.powLimit[CBlockHeader::ALGO_POS] = uint256S("7fffff0000000000000000000000000000000000000000000000000000000000"); // 0x207fffff
-        consensus.powLimit[CBlockHeader::ALGO_POW_SHA256] = uint256S("7fffff0000000000000000000000000000000000000000000000000000000000"); // 0x207fffff
+        consensus.powLimit[CBlockHeader::ALGO_POW_XEVAN] = uint256S("7fffff0000000000000000000000000000000000000000000000000000000000"); // 0x207fffff
         consensus.nPowTargetTimespan = 1 * 60 * 60; // 1 hour
         consensus.nPowTargetSpacing = 80; // 80-second block spacing - must be divisible by (nStakeTimestampMask+1)
         consensus.nStakeTimestampMask = 0x3; // 4 second time slots
@@ -491,7 +491,7 @@ public:
 
         UpdateActivationParametersFromArgs(args);
 
-        genesis = CreateGenesisBlock(1296688602, 14895, UintToArith256(consensus.powLimit[CBlockHeader::ALGO_POW_SHA256]).GetCompact(), 1, 50 * COIN);
+        genesis = CreateGenesisBlock(1296688602, 14895, UintToArith256(consensus.powLimit[CBlockHeader::ALGO_POW_XEVAN]).GetCompact(), 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
         //printf("Merkle hash regtest: %s\n", genesis.hashMerkleRoot.ToString().c_str());
         //printf("Genesis hash regtest: %s\n", consensus.hashGenesisBlock.ToString().c_str());

@@ -30,13 +30,19 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    uint256 nAccumulatorCheckpoint;
 
     CBlockHeader()
     {
         SetNull();
     }
 
-    SERIALIZE_METHODS(CBlockHeader, obj) { READWRITE(obj.nVersion, obj.hashPrevBlock, obj.hashMerkleRoot, obj.nTime, obj.nBits, obj.nNonce); }
+    SERIALIZE_METHODS(CBlockHeader, obj)
+    {
+        READWRITE(obj.nVersion, obj.hashPrevBlock, obj.hashMerkleRoot, obj.nTime, obj.nBits, obj.nNonce);
+        if (obj.nVersion == 4)
+            READWRITE(obj.nAccumulatorCheckpoint);
+    }
 
     void SetNull()
     {
@@ -46,6 +52,7 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        nAccumulatorCheckpoint.SetNull();
     }
 
     bool IsNull() const
@@ -67,13 +74,13 @@ public:
 
     enum BlockType {
         ALGO_POS = 0,
-        ALGO_POW_SHA256 = 1,
+        ALGO_POW_XEVAN = 1,
         ALGO_COUNT
     };
 
     enum AlgoFlags {
         VERSION_POS = 1<<29,
-        VERSION_POW_SHA256 = 2<<29,
+        VERSION_POW_XEVAN = 2<<29,
         VERSION_ALGO = 7<<29,
         VERSION_POW = 6<<29
     };
@@ -83,8 +90,8 @@ public:
         switch (version & VERSION_ALGO) {
             case VERSION_POS:
                 return ALGO_POS;
-            case VERSION_POW_SHA256:
-                return ALGO_POW_SHA256;
+            case VERSION_POW_XEVAN:
+                return ALGO_POW_XEVAN;
             default:
                 return -1;
         }
@@ -95,8 +102,8 @@ public:
         switch (algo) {
             case ALGO_POS:
                 return VERSION_POS;
-            case ALGO_POW_SHA256:
-                return VERSION_POW_SHA256;
+            case ALGO_POW_XEVAN:
+                return VERSION_POW_XEVAN;
             default:
                 return FIRST_FORK_VERSION;
         }
@@ -160,6 +167,7 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.nAccumulatorCheckpoint = nAccumulatorCheckpoint;
         return block;
     }
 

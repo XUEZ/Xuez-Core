@@ -165,7 +165,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
         pblocktemplate->entries.emplace_back(CTransactionRef(), -1, -1); // updated at end
     static int64_t nLastCoinStakeSearchTime = GetAdjustedTime(); // only initialized at startup
 
-    pblock->nVersion = ComputeBlockVersion(pindexPrev, fProofOfStake ? CBlockHeader::ALGO_POS : CBlockHeader::ALGO_POW_SHA256, consensusParams);
+    pblock->nVersion = ComputeBlockVersion(pindexPrev, fProofOfStake ? CBlockHeader::ALGO_POS : CBlockHeader::ALGO_POW_XEVAN, consensusParams);
     // -regtest only: allow overriding block.nVersion with
     // -blockversion=N to test forking scenarios
     if (chainparams.MineBlocksOnDemand())
