@@ -161,7 +161,7 @@ CAmount GetMinFee(const CTransaction& tx)
 {
     //int64_t nBytes = ::GetSerializeSize(tx, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS);
     int64_t vBytes = GetVirtualTransactionSize(tx); // Remember, fees are normally calculated in sats/KB
-    CAmount nMinFee = vBytes * 100000 / 1000; // DEFAULT_TRANSACTION_MINFEE / 1000;
+    CAmount nMinFee = static_cast<uint32_t>(tx.nVersion) >= 2 ? vBytes * 100000 / 1000 : 0; // DEFAULT_TRANSACTION_MINFEE / 1000;
 
     if (!MoneyRange(nMinFee))
         nMinFee = MAX_MONEY;

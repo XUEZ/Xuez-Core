@@ -64,12 +64,12 @@ public:
     bool IsProofOfStake() const
     {
         // nNonce == 0 for PoS blocks
-        return (nVersion & VERSION_ALGO) == VERSION_POS || (nVersion < FIRST_FORK_VERSION && nNonce == 0);
+        return (nVersion & VERSION_ALGO) == VERSION_POS || (nVersion < FIRST_FORK_VERSION && nNonce == 0 && nTime != 1523057829);
     }
 
     bool IsProofOfWork() const
     {
-        return (nVersion & VERSION_POW) || (nVersion < FIRST_FORK_VERSION && nNonce != 0);
+        return (nVersion & VERSION_POW) || (nVersion < FIRST_FORK_VERSION && (nNonce != 0 || nTime == 1523057829));
     }
 
     enum BlockType {

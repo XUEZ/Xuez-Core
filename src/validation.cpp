@@ -1241,23 +1241,45 @@ CAmount GetBlockSubsidy(int nHeight, bool fProofOfStake, uint64_t nCoinAge, cons
 {
     if (nHeight < 0) return 0;
 
+    CAmount nSubsidy = 0;
     const CAmount nMoneySupply = (nHeight > 0 && ::ChainActive().Tip()) ? (::ChainActive()[nHeight-1] ? ::ChainActive()[nHeight-1]->nMoneySupply : ::ChainActive().Tip()->nMoneySupply) : 0; // the previous block's money supply should probably be passed to this function instead of retrieving it here
 
-    int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
-    // Force block reward to zero when right shift is undefined.
-    if (halvings >= 64)
-        return 0;
+    if (Params().NetworkIDString() == CBaseChainParams::MAIN) {
+        if (nHeight == 0) {
+            nSubsidy = 0 * COIN;
+        } else if (nHeight <= 10) {
+            nSubsidy = 24462101 * COIN / 100; // * CENT
+        } else if (nHeight <= 501) {
+            nSubsidy = 1 * COIN / 100;
+        } else if (nHeight <= 525600) {
+            nSubsidy = 250 * COIN / 100;
+        } else if (nHeight <= 1051200) {
+            nSubsidy = 155 * COIN / 100;
+        } else if (nHeight <= 1576800) {
+            nSubsidy = 96 * COIN / 100;
+        } else if (nHeight <= 2628000) {
+            nSubsidy = 59 * COIN / 100;
+        } else if (nHeight <= 4204800) {
+            nSubsidy = 37 * COIN / 100;
+        } else if (nHeight <= 6832800) {
+            nSubsidy = 23 * COIN / 100;
+        } else if (nHeight <= 11037600) {
+            nSubsidy = 14 * COIN / 100;
+        } else {
+            nSubsidy = 10 * COIN / 100;
+        }
 
-    CAmount nSubsidy = 50 * COIN;
-    // Subsidy is cut in half every 210,000 blocks which will occur approximately every 4 years.
-    nSubsidy >>= halvings;
+        if (nHeight == 216000 || nHeight == 302400 || nHeight == 388800) // MN governance blocks
+            nSubsidy += 4320 * COIN;
+    } else
+        nSubsidy = 100 * COIN;
 
     if ((unsigned)nHeight >= consensusParams.nMinerConfirmationWindow) {
         if (nMoneySupply + nSubsidy > MAX_MONEY) // soft supply cap (this will essentially put us into static PoW/PoS rewards)
-            nSubsidy = std::min(nSubsidy, 100 * COIN);
+            nSubsidy = std::min(nSubsidy, COIN / 1000);
     }
 
-    // 10% of reward goes to governance/treasury (90/100 goes to stakers and MNs)
+    // 3% of reward goes to governance/treasury (97/100 goes to stakers and MNs)
     CAmount nSuperblockPart = 0;
     if (nHeight >= consensusParams.nTreasuryPaymentsStartBlock || nHeight >= consensusParams.nBudgetPaymentsStartBlock) {
         nSuperblockPart = nSubsidy * consensusParams.nTreasuryRewardPercentage / 100;
@@ -1298,7 +1320,7 @@ CAmount GetTreasuryPayment(int nHeight, const Consensus::Params& consensusParams
                 blockValue += pindex->nMint - pindex->nTreasuryPayment;
             }
         }
-        return blockValue * consensusParams.nTreasuryRewardPercentage / std::max(100 - consensusParams.nTreasuryRewardPercentage, 1u); // 10% of block value paid to treasury
+        return blockValue * consensusParams.nTreasuryRewardPercentage / std::max(100 - consensusParams.nTreasuryRewardPercentage, 1u); // 3% of block value paid to treasury
     } else {
         return 0;
     }
@@ -2011,11 +2033,13 @@ static inline bool ContextualCheckPoSBlock(const CBlock& block, const bool& fPro
     uint64_t nStakeModifier = 0;
     //uint256 nStakeModifierV2 = uint256();
     bool fGeneratedStakeModifier = false;
-    //if (!ComputeNextStakeModifier(pindex, nStakeModifier, fGeneratedStakeModifier))
-        //return error("ConnectBlock(): ComputeNextStakeModifier() failed");
-    // The stake modifier kernel must be derived from some data which cannot be changed without invalidating the entire block in order to prevent stake grinding
-    nStakeModifier = ComputeStakeModifierV3(pindex->pprev, fProofOfStake ? block.vtx[1]->vin[0].prevout.hash : pindex->GetBlockHash());
-    fGeneratedStakeModifier = true;
+    if (pindex->nHeight >= params.nMandatoryUpgradeBlock) {
+        // The stake modifier kernel must be derived from some data which cannot be changed without invalidating the entire block in order to prevent stake grinding
+        nStakeModifier = ComputeStakeModifierV3(pindex->pprev, fProofOfStake ? block.vtx[1]->vin[0].prevout.hash : pindex->GetBlockHash());
+        fGeneratedStakeModifier = true;
+    } else if (!ComputeNextStakeModifier(pindex, nStakeModifier, fGeneratedStakeModifier))
+        return error("ConnectBlock(): ComputeNextStakeModifier() failed");
+
     //nStakeModifierV2 = ComputeStakeModifierV2(pindex->pprev, fProofOfStake ? block.vtx[1]->vin[0].prevout.hash : pindex->GetBlockHash());
     //fGeneratedStakeModifier = true;
 
@@ -2188,7 +2212,7 @@ bool CChainState::ConnectBlock(const CBlock& block, BlockValidationState& state,
     // Now that the whole chain is irreversibly beyond that time it is applied to all blocks except the
     // two in the chain that violate it. This prevents exploiting the issue against nodes during their
     // initial block download.
-    bool fEnforceBIP30 = true;
+    bool fEnforceBIP30 = pindex->nHeight >= chainparams.GetConsensus().nMandatoryUpgradeBlock || chainparams.GetConsensus().hashGenesisBlock != uint256S("0x000000e1febc39965b055e8e0117179a4d18e24e7aaa0c69864c4054b4f29445");
 
     // Once BIP34 activated it was not possible to create new duplicate coinbases and thus other than starting
     // with the 2 existing duplicate coinbase pairs, not possible to create overwriting txs.  But by the
@@ -3641,6 +3665,9 @@ bool CheckBlock(const CBlock& block, BlockValidationState& state, const Consensu
     // Check transactions
     // Must check for duplicate inputs (see CVE-2018-17144)
     for (const auto& tx : block.vtx) {
+        if (tx->nVersion < 2 && block.nVersion >= CBlockHeader::FIRST_FORK_VERSION)
+            return state.Invalid(BlockValidationResult::BLOCK_CONSENSUS, "bad-txns-version", strprintf("transaction %s has invalid version %i", tx->GetHash().ToString(), tx->nVersion));
+
         TxValidationState tx_state;
         if (!CheckTransaction(*tx, tx_state)) {
             // CheckBlock() does context-free validation checks. The only
@@ -3771,11 +3798,11 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
     }
 
     // Check timestamp against prev
-    if (block.GetBlockTime() <= pindexPrev->GetMedianTimePast())
+    if ((block.nVersion >= CBlockHeader::FIRST_FORK_VERSION || consensusParams.hashGenesisBlock != uint256S("0x000000e1febc39965b055e8e0117179a4d18e24e7aaa0c69864c4054b4f29445")) && block.GetBlockTime() <= pindexPrev->GetMedianTimePast())
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "time-too-old", "block's timestamp is too early");
 
     // Check masked timestamp for PoS
-    if (block.IsProofOfStake() && (block.GetBlockTime() & consensusParams.nStakeTimestampMask) != 0)
+    if (block.nVersion >= CBlockHeader::FIRST_FORK_VERSION && block.IsProofOfStake() && (block.GetBlockTime() & consensusParams.nStakeTimestampMask) != 0)
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "invalid-time-mask", "block timestamp mask not valid");
 
     // Check timestamp
@@ -3788,7 +3815,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
     if((block.nVersion < 2 && nHeight >= consensusParams.BIP34Height) ||
        (block.nVersion < 3 && nHeight >= consensusParams.BIP66Height) ||
        (block.nVersion < 4 && nHeight >= consensusParams.BIP65Height) ||
-       (block.nVersion < CBlockHeader::FIRST_FORK_VERSION && nHeight >= 1))
+       (block.nVersion < CBlockHeader::FIRST_FORK_VERSION && nHeight >= consensusParams.nMandatoryUpgradeBlock))
             return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, strprintf("bad-version(0x%08x)", block.nVersion),
                                  strprintf("rejected nVersion=0x%08x block", block.nVersion));
 
@@ -3860,7 +3887,7 @@ static bool ContextualCheckBlock(const CBlock& block, BlockValidationState& stat
     }
 
     // Enforce rule that the coinbase starts with serialized block height
-    if (nHeight >= consensusParams.BIP34Height)
+    if (nHeight >= consensusParams.BIP34Height || (block.IsProofOfWork() && nHeight > 0))
     {
         CScript expect = CScript() << nHeight;
         if (block.vtx[0]->vin[0].scriptSig.size() < expect.size() ||
@@ -5698,8 +5725,8 @@ bool GetCoinAge(const CTransaction& tx, const CCoinsViewCache& view, unsigned in
 
         unsigned int nTimeBlockFrom = pindexFrom->GetBlockTime();
         int nHeightBlockFrom = pindexFrom->nHeight;
-        int64_t nStakeMinAge = params.nStakeMinAge;
-        int nStakeMinDepth = params.nStakeMinDepth;
+        int64_t nStakeMinAge = nHeightCurrent >= params.nMandatoryUpgradeBlock ? params.nStakeMinAge[1] : params.nStakeMinAge[0];
+        int nStakeMinDepth = nHeightCurrent >= params.nMandatoryUpgradeBlock ? params.nStakeMinDepth[1] : params.nStakeMinDepth[0];
         //LogPrintf("nTimeTx=%u, nTimeBlockFrom=%u, nTimeTxPrev=%u, nHeightBlockFrom=%i, nStakeMinAge=%li, nStakeMinDepth=%i\n", nTimeTx, nTimeBlockFrom, nTimeTxPrev, nHeightBlockFrom, nStakeMinAge, nStakeMinDepth);
 
         if (nTimeTx < nTimeBlockFrom)

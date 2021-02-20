@@ -314,7 +314,7 @@ static inline bool GetKernelStakeModifierV05(const CBlockIndex* pindexPrev, unsi
     nStakeModifierTime = pindex->GetBlockTime();
     int64_t nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval();
 
-    if (nStakeModifierTime + params.nStakeMinAge - nStakeModifierSelectionInterval <= (int64_t)nTimeTx)
+    if (nStakeModifierTime + params.nStakeMinAge[1] - nStakeModifierSelectionInterval <= (int64_t)nTimeTx)
     {
         // Best block is still more than
         // (nStakeMinAge minus a selection interval) older than kernel timestamp
@@ -326,7 +326,7 @@ static inline bool GetKernelStakeModifierV05(const CBlockIndex* pindexPrev, unsi
     }
     // loop to find the stake modifier earlier by
     // (nStakeMinAge minus a selection interval)
-    while (nStakeModifierTime + params.nStakeMinAge - nStakeModifierSelectionInterval > (int64_t)nTimeTx)
+    while (nStakeModifierTime + params.nStakeMinAge[1] - nStakeModifierSelectionInterval > (int64_t)nTimeTx)
     {
         if (!pindex->pprev)
         {   // reached genesis block; should not happen
@@ -383,7 +383,7 @@ static inline bool GetKernelStakeModifierV03(const CBlockIndex* pindexPrev, uint
         pindex = (!tmpChain.empty() && pindex->nHeight >= tmpChain[0]->nHeight - 1) ? tmpChain[n++] : ::ChainActive().Next(pindex);
         if (n > tmpChain.size() || pindex == NULL) // check if tmpChain[n+1] exists
         {   // reached best block; may happen if node is behind on block chain
-            if (fPrintProofOfStake || (old_pindex->GetBlockTime() + params.nStakeMinAge - nStakeModifierSelectionInterval > GetAdjustedTime()))
+            if (fPrintProofOfStake || (old_pindex->GetBlockTime() + params.nStakeMinAge[1] - nStakeModifierSelectionInterval > GetAdjustedTime()))
                 return error("GetKernelStakeModifier() : reached best block %s at height %d from block %s",
                     old_pindex->GetBlockHash().ToString(), old_pindex->nHeight, hashBlockFrom.ToString());
             else
@@ -423,9 +423,9 @@ static inline bool stakeTargetHit(const uint256& hashProofOfStake, const CAmount
 bool GetKernelStakeModifier(const CBlockIndex* pindexPrev, const uint256& hashBlockFrom, unsigned int nTimeTx, const Consensus::Params& params, uint64_t& nStakeModifier, uint256& nStakeModifierV2, int& nStakeModifierHeight, int64_t& nStakeModifierTime, bool fPrintProofOfStake)
 {
     // Peercoin stake modifier selection for kernel
-    if ((unsigned)(pindexPrev->nHeight+1) >= params.nMinerConfirmationWindow && GetKernelStakeModifierV05(pindexPrev, nTimeTx, params, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, fPrintProofOfStake)) //IsProtocolV05(nTimeTx)
+    if ((pindexPrev->nHeight+1) >= params.nMandatoryUpgradeBlock && GetKernelStakeModifierV05(pindexPrev, nTimeTx, params, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, fPrintProofOfStake)) //IsProtocolV05(nTimeTx)
         return true;
-    else if (Params().NetworkIDString() == CBaseChainParams::REGTEST && GetKernelStakeModifierV03(pindexPrev, hashBlockFrom, params, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, fPrintProofOfStake)) {
+    else if ((pindexPrev->nHeight+1) < params.nMandatoryUpgradeBlock && GetKernelStakeModifierV03(pindexPrev, hashBlockFrom, params, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, fPrintProofOfStake)) {
         // This is only here for backwards compatibility with very old PIVX forks; it should not be used in new production code due to the
         // stake grinding vulnerability (it can be replaced by hard coded or bypassed modifiers on old blocks when it is no longer being used)
         return true;
@@ -475,8 +475,8 @@ bool CheckStakeKernelHash(const unsigned int& nBits, const CBlockIndex* pindexPr
     const CAmount nValueIn = prevTxOut.nValue; //txPrev->vout[prevout.n].nValue;
     const unsigned int nTimeBlockFrom = pindexFrom->GetBlockTime();
     const int nHeightBlockFrom = pindexFrom->nHeight;
-    const int64_t nStakeMinAge = params.nStakeMinAge;
-    const int nStakeMinDepth = params.nStakeMinDepth;
+    const int64_t nStakeMinAge = nHeightCurrent >= params.nMandatoryUpgradeBlock ? params.nStakeMinAge[1] : params.nStakeMinAge[0];
+    const int nStakeMinDepth = nHeightCurrent >= params.nMandatoryUpgradeBlock ? params.nStakeMinDepth[1] : params.nStakeMinDepth[0];
 
     if (nTimeTx < nTimeBlockFrom) // Transaction timestamp violation
         return error("CheckStakeKernelHash() : nTime violation");
@@ -522,7 +522,7 @@ bool CheckStakeKernelHash(const unsigned int& nBits, const CBlockIndex* pindexPr
 
     // If wallet is simply checking to make sure a hash is valid
     if (fCheck) {
-        hashProofOfStake = stakeHash(nTimeTx, ss, prevout.n, prevout.hash, nTimeBlockFrom, true);
+        hashProofOfStake = stakeHash(nTimeTx, ss, prevout.n, prevout.hash, nTimeBlockFrom, nHeightCurrent >= params.nMandatoryUpgradeBlock);
         if (gArgs.GetBoolArg("-debug", false) || fPrintProofOfStake) {
             //LogPrintf("CheckStakeKernelHash() : nStakeModifierV2=%s\n", nStakeModifierV2.ToString());
             //if (IsProtocolV03(nTimeTx))
@@ -534,12 +534,12 @@ bool CheckStakeKernelHash(const unsigned int& nBits, const CBlockIndex* pindexPr
             LogPrintf("CheckStakeKernelHash() : check protocol=%s modifier=0x%016x nTimeBlockFrom=%u prevoutHash=%s nTimeTxPrev=%u nPrevout=%u nTimeTx=%u hashProof=%s\n",
                 //IsProtocolV05(nTimeTx) ? "0.5" : (IsProtocolV03(nTimeTx) ? "0.3" : "0.2"),
                 //IsProtocolV03(nTimeTx) ? nStakeModifier : (uint64_t) nBits,
-                nHeightCurrent >= 1 ? "0.5" : "0.3", nStakeModifier,
+                nHeightCurrent >= params.nMandatoryUpgradeBlock ? "0.5" : "0.3", nStakeModifier,
                 nTimeBlockFrom, prevout.hash.ToString(), nTimeTxPrev, prevout.n, nTimeTx,
                 hashProofOfStake.ToString());
         }
 
-        return stakeTargetHit(hashProofOfStake, nValueIn, bnTargetPerCoinDay, true);
+        return stakeTargetHit(hashProofOfStake, nValueIn, bnTargetPerCoinDay, nHeightCurrent >= params.nMandatoryUpgradeBlock);
     }
 
     // nHashDrift should be <= MAX_FUTURE_BLOCK_TIME otherwise we risk creating a block which will be rejected due to nTimeTx being too far in the future
@@ -575,7 +575,7 @@ bool CheckStakeKernelHash(const unsigned int& nBits, const CBlockIndex* pindexPr
             LogPrintf("CheckStakeKernelHash() : pass protocol=%s modifier=0x%016x nTimeBlockFrom=%u prevoutHash=%s nTimeTxPrev=%u nPrevout=%u nTimeTx=%u hashProof=%s\n",
                 //IsProtocolV03(nTimeTx) ? "0.3" : "0.2",
                 //IsProtocolV03(nTimeTx) ? nStakeModifier : (uint64_t) nBits,
-                nHeightCurrent >= 1 ? "0.5" : "0.3", nStakeModifier,
+                nHeightCurrent >= params.nMandatoryUpgradeBlock ? "0.5" : "0.3", nStakeModifier,
                 nTimeBlockFrom, prevout.hash.ToString(), nTimeTxPrev, prevout.n, nTryTime,
                 hashProofOfStake.ToString());
         }

@@ -569,7 +569,7 @@ bool CreateCoinStake(CMutableTransaction& coinstakeTx, CBlock* pblock, std::shar
                 continue;
             }
 
-            if (pindexFrom->GetBlockTime() + consensusParams.nStakeMinAge > pblock->nTime || nHeight - pindexFrom->nHeight < consensusParams.nStakeMinDepth)
+            if (pindexFrom->GetBlockTime() + consensusParams.nStakeMinAge[1] > pblock->nTime || nHeight - pindexFrom->nHeight < consensusParams.nStakeMinDepth[1])
                 continue; // only count coins meeting min age/depth requirement
 
             unsigned int nInterval = 0;
@@ -773,7 +773,7 @@ static inline void PoSMiner(std::shared_ptr<CWallet> pwallet, ChainstateManager*
             if (Params().NetworkIDString() != CBaseChainParams::REGTEST) { // Params().MiningRequiresPeers()
                 // Busy-wait for the network to come online so we don't waste time mining
                 // on an obsolete chain. In regtest mode we expect to fly solo.
-                while (connman == nullptr || connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0 || ::ChainstateActive().IsInitialBlockDownload()) {
+                while (connman == nullptr || connman->GetNodeCount(CConnman::CONNECTIONS_ALL) == 0 || ::ChainstateActive().IsInitialBlockDownload() || ::ChainActive().Height()+1 < Params().GetConsensus().nMandatoryUpgradeBlock) {
                     if (GetMintWarning() != strMintSyncMessage) {
                         SetMintWarning(strMintSyncMessage);
                         uiInterface.NotifyAlertChanged();

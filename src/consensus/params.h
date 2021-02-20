@@ -52,6 +52,7 @@ struct Params {
     int nBudgetPaymentsStartBlock;
     int nPoSStartBlock;
     int nLastPoWBlock;
+    int nMandatoryUpgradeBlock;
     int nTreasuryPaymentsStartBlock;
     int nTreasuryPaymentsCycleBlocks;
     std::map<CScript, unsigned int> mTreasuryPayees;
@@ -103,8 +104,8 @@ struct Params {
 
     /** peercoin stuff */
     int nStakeTimestampMask;
-    int nStakeMinDepth;
-    int64_t nStakeMinAge;
+    int nStakeMinDepth[2];
+    int64_t nStakeMinAge[2];
     int64_t nStakeMaxAge;
     int64_t nModifierInterval;
 };
