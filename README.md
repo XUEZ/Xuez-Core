@@ -24,3 +24,21 @@ Wallet Port: 41798, RPC Port: 41799
 |  **Amount**             | **Notes**                |
 |-------------------------|--------------------------|
 | 2,446,202 XUEZ          | Initial XIOS swap 0 Day  |
+
+### Rewards Breakdown PoW blocks 151-43200, PoS blocks 43201 - 1576799. PoSv3 blocks 1576800 to end.
+
+| **Block Height**       | **Masternodes**    | **PoW/PoS**               | **Budget/Dev fund**               |
+|----------------------------|---------------------------|---------------------------|----------------------------|
+| 1 - 150                | swap/premine        | --      | --            |
+| 151- 525600            | 60% ( 1.5 XUEZ)     | 30% (0.75 XUEZ)   | 10% (0.15 XUEZ)*  |
+| 525601-1051200         | 60% (0.93 XUEZ)     | 30% (0.465 XUEZ)  | 10% (0.155 XUEZ)* |
+| 1051201-1442799        | 60% (0.576 XUEZ)    | 30% (0.288 XUEZ)  | 10% (0.096 XUEZ)* |
+| 1442800-1576800        | NA                  | 97% (0.9312 XUEZ) | 3% (0.0288 XUEZ)* |
+| 1576801-2628000        | NA                  | 97% (0.5723 XUEZ) | 3% (0.0177 XUEZ)* |
+| 2628001-4204800        | NA                  | 97% (0.3589 XUEZ) | 3% (0.0111 XUEZ)* |
+| 4204801-6832800        | NA                  | 97% (0.2231 XUEZ) | 3% (0.0069 XUEZ)* |
+| 6832801-11037600       | NA                  | 97% (0.1358 XUEZ) | 3% (0.0042 XUEZ)* |
+| 11037601 -             | NA                  | 97% (0.097  XUEZ) | 3% (0.003 XUEZ)*  |
+
+* budget values reduced from PoS when active
+* dev fund replaces budget allocation after block 1442799
