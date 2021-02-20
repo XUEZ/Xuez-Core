@@ -25,7 +25,7 @@ Wallet Port: 41798, RPC Port: 41799
 |-------------------------|--------------------------|
 | 2,446,202 XUEZ          | Initial XIOS swap 0 Day  |
 
-### Rewards Breakdown PoW blocks 151-43200, PoS blocks 43201 - 1576799. PoSv3 blocks 1576800 to end.
+#### Rewards Breakdown PoW blocks 151-43200, PoS blocks 43201 - 1576799. PoSv3 blocks 1576800 to end.
 
 | **Block Height**       | **Masternodes**    | **PoW/PoS**               | **Budget/Dev fund**               |
 |----------------------------|---------------------------|---------------------------|----------------------------|
