@@ -4605,3 +4605,124 @@ ScriptPubKeyMan* CWallet::AddWalletDescriptor(WalletDescriptor& desc, const Flat
 
     return ret;
 }
+
+bool CWallet::SelectStakeCoins(std::set<CInputCoin>& setCoins) const
+{
+    AssertLockHeld(cs_wallet);
+
+    // Choose coins to use
+    CAmount nBalance = GetBalance().m_mine_trusted;
+    CAmount nValueIn = 0;
+    std::vector<COutput> vAvailableCoins;
+    CCoinControl temp;
+    CoinSelectionParams coin_selection_params;
+    coin_selection_params.use_bnb=false;
+    bool bnb_used;
+    AvailableCoins(vAvailableCoins, true, &temp, 1, MAX_MONEY, MAX_MONEY, 0);
+
+    if (!SelectCoins(vAvailableCoins, nBalance, setCoins, nValueIn, temp, coin_selection_params, bnb_used))
+        return false;
+    if (setCoins.empty())
+        return false;
+
+    return true;
+}
+
+// peercoin: sign block
+bool CWallet::GetBlockSigningPubKey(const CBlock& block, CPubKey& pubkey, bool& pubkeyInSig) const
+{
+    AssertLockHeld(cs_wallet);
+
+    const bool fProofOfStake = block.IsProofOfStake();
+    std::vector<std::vector<unsigned char>> vSolutions;
+    const CTxOut& txout = fProofOfStake ? block.vtx[1]->vout[1] : block.vtx[0]->vout[0];
+    CScript scriptPubKey;
+    if (fProofOfStake) {
+        const COutPoint& prevout = block.vtx[1]->vin[0].prevout;
+        const CWalletTx* const origwtx = GetWalletTx(prevout.hash);
+        if (origwtx && origwtx->tx)
+            scriptPubKey = origwtx->tx->vout[prevout.n].scriptPubKey;
+        else
+            return false;
+    } else {
+        scriptPubKey = txout.scriptPubKey;
+    }
+    TxoutType whichType = Solver(scriptPubKey, vSolutions);
+
+    if (whichType == TxoutType::PUBKEY) {
+        pubkey = CPubKey(vSolutions[0]);
+    } else if (whichType == TxoutType::PUBKEYHASH || whichType == TxoutType::WITNESS_V0_KEYHASH) {
+        std::unique_ptr<SigningProvider> provider = GetSolvingProvider(scriptPubKey);
+        if (!provider || !provider->GetPubKey(CKeyID(uint160(vSolutions[0])), pubkey))
+            return false;
+    } else if (whichType == TxoutType::SCRIPTHASH || whichType == TxoutType::WITNESS_V0_SCRIPTHASH) {
+        CScript subscript;
+        std::unique_ptr<SigningProvider> provider = GetSolvingProvider(scriptPubKey);
+        uint160 hash;
+        if (whichType == TxoutType::WITNESS_V0_SCRIPTHASH) {
+            CRIPEMD160 hasher;
+            hasher.Write(&vSolutions[0][0], 32).Finalize(hash.begin());
+        } else // whichType == TxoutType::SCRIPTHASH
+            hash = uint160(vSolutions[0]);
+        if (provider && provider->GetCScript(CScriptID(hash), subscript)) {
+            TxoutType scriptType = Solver(subscript, vSolutions);
+            if (fProofOfStake && (scriptType == TxoutType::MULTISIG /*|| scriptType == TxoutType::MULTISIG_DATA*/))
+                whichType = scriptType; // pubkey is retrieved from PoS output below
+            else if (scriptType != TxoutType::WITNESS_V0_KEYHASH || !provider->GetPubKey(CKeyID(uint160(vSolutions[0])), pubkey))
+                return false;
+        } else
+            return false;
+    } else if (whichType == TxoutType::MULTISIG /*|| whichType == TxoutType::MULTISIG_DATA*/) {
+        if (vSolutions.size() != 3 || vSolutions.front()[0] != 1 || vSolutions.back()[0] != 1)
+            return false;
+        pubkey = CPubKey(vSolutions[1]);
+        if (!pubkey.IsValid())
+            return false;
+    } else {
+        return false;
+    }
+
+    if (fProofOfStake) {
+        TxoutType outputType = Solver(txout.scriptPubKey, vSolutions); // check the output
+        if (outputType == TxoutType::PUBKEY) { // pubkey is revealed in p2pk output
+            pubkey = CPubKey(vSolutions[0]); // use pubkey from output rather than input
+            pubkeyInSig = true;
+        } else if (whichType == TxoutType::PUBKEY || whichType == TxoutType::MULTISIG /*|| whichType == TxoutType::MULTISIG_DATA*/) { // p2pk and multisig PoS inputs don't place the pubkey in the scriptSig
+            pubkeyInSig = false;
+            if (outputType == TxoutType::PUBKEYHASH || outputType == TxoutType::WITNESS_V0_KEYHASH) {
+                std::unique_ptr<SigningProvider> provider = GetSolvingProvider(txout.scriptPubKey);
+                if (!provider || !provider->GetPubKey(CKeyID(uint160(vSolutions[0])), pubkey)) // extract pubkey from output to put in coinbase
+                    return false;
+            } else if (outputType == TxoutType::SCRIPTHASH) {
+                CScript subscript;
+                std::unique_ptr<SigningProvider> provider = GetSolvingProvider(txout.scriptPubKey);
+                if (provider && provider->GetCScript(CScriptID(uint160(vSolutions[0])), subscript)) { // extract pubkey from script to put in coinbase
+                    outputType = Solver(subscript, vSolutions);
+                    if (outputType != TxoutType::WITNESS_V0_KEYHASH || !provider->GetPubKey(CKeyID(uint160(vSolutions[0])), pubkey))
+                        return false;
+                } else
+                    return false;
+            } else
+                return false;
+        } else
+            pubkeyInSig = true;
+    } else if (whichType != TxoutType::PUBKEY) // PoW has no inputs so the pubkey isn't revealed unless it uses a p2pk output
+        pubkeyInSig = false;
+    else
+        pubkeyInSig = true;
+
+    return true;
+}
+
+// peercoin: sign block
+bool CWallet::SignBlock(CBlock& block, const CPubKey& pubkey) const
+{
+    AssertLockHeld(cs_wallet);
+
+    // Try to sign with all ScriptPubKeyMans
+    for (ScriptPubKeyMan* spk_man : GetAllScriptPubKeyMans()) {
+        if (spk_man->SignBlock(block, pubkey) == SigningResult::OK)
+            return true;
+    }
+    return false;
+}

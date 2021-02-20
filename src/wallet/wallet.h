@@ -983,6 +983,9 @@ public:
      * @param[in] orderForm BIP 70 / BIP 21 order form details to be set on the transaction.
      */
     void CommitTransaction(CTransactionRef tx, mapValue_t mapValue, std::vector<std::pair<std::string, std::string>> orderForm);
+    bool SelectStakeCoins(std::set<CInputCoin>& setCoins) const EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
+    bool GetBlockSigningPubKey(const CBlock& block, CPubKey& pubkey, bool& pubkeyInSig) const EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
+    bool SignBlock(CBlock& block, const CPubKey& pubkey) const EXCLUSIVE_LOCKS_REQUIRED(cs_wallet);
 
     bool DummySignTx(CMutableTransaction &txNew, const std::set<CTxOut> &txouts, bool use_max_sig = false) const
     {
