@@ -212,7 +212,7 @@ public:
                 { 1300000, uint256S("0xccb0ccb4f2d160b7f51332da641a6c0f5d76f4dadb1d47d6c5fac73d29aa9fd6")},
                 { 1350000, uint256S("0x7562e5c43ff39a6993557d4f0f9e49690ba9d07a6b054c7313a35606c5eaf814")},
                 { 1400000, uint256S("0x5b85bce8fa177da2ed744a3fbe35bb4e5e1ff319c110b17ec0715e6d3b1ca8de")},
-                { 1442800. uint256S("0xe06eaa9e2155705c2714875e132f957d4e392495fe22b7b287931c0464bf05bf")}
+                { 1442800, uint256S("0xe06eaa9e2155705c2714875e132f957d4e392495fe22b7b287931c0464bf05bf")}
             }
         };
 
