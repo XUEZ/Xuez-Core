@@ -93,7 +93,7 @@ public:
         consensus.nMandatoryUpgradeBlock = 1442800;
         consensus.nTreasuryPaymentsStartBlock = consensus.nMandatoryUpgradeBlock;
         consensus.BIP16Exception = uint256{};
-        consensus.BIP34Height = consensus.nMandatoryUpgradeBlock;
+        consensus.BIP34Height = 1442800;
         consensus.BIP34Hash = uint256S("0xe06eaa9e2155705c2714875e132f957d4e392495fe22b7b287931c0464bf05bf");
         consensus.BIP65Height = 0;
         consensus.BIP66Height = 0;
@@ -128,8 +128,8 @@ public:
         consensus.mTreasuryPayees.emplace(CScript() << OP_0 << ParseHex("b9b44fa969c0a95dfa89a553cd6adb7a59e49ad1"), 100); // 3% (full reward) for xz1qhx6yl2tfcz54m75f54fu66km0fv7fxk30pr3p0
         consensus.nTreasuryRewardPercentage = 3; // 3% of block reward goes to treasury
 
-        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000253bbaf1090c8a9fc");
-        consensus.defaultAssumeValid = uint256S("0x5b85bce8fa177da2ed744a3fbe35bb4e5e1ff319c110b17ec0715e6d3b1ca8de"); // 1400000
+        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000259c59e9365542941");
+        consensus.defaultAssumeValid = uint256S("0xccd6cbe2c7cdc60146252d659808c87e89a15f2197cd0ea1898fde20eda849ba"); // 1450000
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -212,15 +212,16 @@ public:
                 { 1300000, uint256S("0xccb0ccb4f2d160b7f51332da641a6c0f5d76f4dadb1d47d6c5fac73d29aa9fd6")},
                 { 1350000, uint256S("0x7562e5c43ff39a6993557d4f0f9e49690ba9d07a6b054c7313a35606c5eaf814")},
                 { 1400000, uint256S("0x5b85bce8fa177da2ed744a3fbe35bb4e5e1ff319c110b17ec0715e6d3b1ca8de")},
-                { 1442800, uint256S("0xe06eaa9e2155705c2714875e132f957d4e392495fe22b7b287931c0464bf05bf")}
+                { 1442800, uint256S("0xe06eaa9e2155705c2714875e132f957d4e392495fe22b7b287931c0464bf05bf")},
+                { 1450000, uint256S("0xccd6cbe2c7cdc60146252d659808c87e89a15f2197cd0ea1898fde20eda849ba")},
             }
         };
 
         chainTxData = ChainTxData{
-            // Data from RPC: getchaintxstats 30720 0000000000000000000b9d2ec5a352ecba0592946514a92f14319dc2b367fc72
-            /* nTime    */ 0,
-            /* nTxCount */ 0,
-            /* dTxRate  */ 0,
+            // Data from RPC: getchaintxstats 30720 ccd6cbe2c7cdc60146252d659808c87e89a15f2197cd0ea1898fde20eda849ba
+            /* nTime    */ 1614081424,
+            /* nTxCount */ 61628,
+            /* dTxRate  */ 0.0193981438493172,
         };
     }
 };
