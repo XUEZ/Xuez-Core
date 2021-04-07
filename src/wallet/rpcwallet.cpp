@@ -8,12 +8,14 @@
 #include <interfaces/chain.h>
 #include <key_io.h>
 #include <node/context.h>
+#include <miner.h>
 #include <optional.h>
 #include <outputtype.h>
 #include <policy/feerate.h>
 #include <policy/fees.h>
 #include <policy/policy.h>
 #include <policy/rbf.h>
+#include <rpc/blockchain.h>
 #include <rpc/rawtransaction_util.h>
 #include <rpc/server.h>
 #include <rpc/util.h>
@@ -38,10 +40,15 @@
 #include <wallet/walletdb.h>
 #include <wallet/walletutil.h>
 
+#include <rpc/blockchain.h>
+
+#include <validation.h>
+#include <validationinterface.h>
+#include <txmempool.h>
+
 #include <stdint.h>
 
 #include <univalue.h>
-
 
 using interfaces::FoundBlock;
 
@@ -58,7 +65,6 @@ static inline bool GetAvoidReuseFlag(const CWallet* const pwallet, const UniValu
 
     return avoid_reuse;
 }
-
 
 /** Used by RPC commands that have an include_watchonly parameter.
  *  We default to true for watchonly wallets if include_watchonly isn't
@@ -915,6 +921,55 @@ static RPCHelpMan getbalance()
     const auto bal = pwallet->GetBalance(min_depth, avoid_reuse);
 
     return ValueFromAmount(bal.m_mine_trusted + (include_watchonly ? bal.m_watchonly_trusted : 0));
+},
+    };
+}
+
+static RPCHelpMan getstakingstatus()
+{
+    return RPCHelpMan{"getstakingstatus",
+                "Returns an object containing staking-related information.\n",
+                {},
+                RPCResult{
+                    RPCResult::Type::ARR, "Result", "",
+                    {
+                        {RPCResult::Type::NUM, "enabled", "1|0,  (boolean) Is staking enabled"},
+                        {RPCResult::Type::NUM, "staking", "1|0,  (boolean) Is staking available"},
+                        {RPCResult::Type::NUM, "weight",  "nnn,  (numeric) Your estimated stake weight"},
+                        {RPCResult::Type::NUM, "netstakeweight", "nnn,  (numeric) Estimated network stake weight"},
+                        {RPCResult::Type::NUM, "expectedtime", "nnn,  (numeric) Expected time in seconds to earn reward"},
+                    }            
+                },
+                RPCExamples{
+                    HelpExampleCli("getstakingstatus", "")
+            + HelpExampleRpc("getstakingstatus", "")
+                },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+{
+    
+    bool nStakingEnabled = (!gArgs.GetBoolArg("-staking", true)) ? false : true;
+    int64_t nStakingNow = 0, nExpectedTime = 0, nWeight = 0, nNetworkWeight = 0;
+    
+    if (nStakingEnabled){
+		std::shared_ptr<CWallet> const wallet = GetWalletForJSONRPCRequest(request);
+		if (!wallet) return NullUniValue;
+		const CWallet* const pwallet = wallet.get();
+		if ( pwallet ){		
+			//LOCK(pwallet->cs_wallet); ** locks are handled in the called methods below
+			nWeight = pwallet->GetStakeWeight();
+			nNetworkWeight = pwallet->GetNetworkStakeWeight();
+			nExpectedTime = 1.0455 * 64 * nNetworkWeight / nWeight;
+		}
+		nStakingNow = ( ( nWeight + nNetworkWeight ) > 0 ) ? 1 : 0;
+		nExpectedTime = ( nWeight > 0 ) ? ( ( nNetworkWeight / nWeight ) * 11.8 ) : 0;
+	}
+    UniValue result(UniValue::VOBJ);
+    result.pushKV( "enabled", (bool)nStakingEnabled );
+	result.pushKV( "staking", (int64_t)nStakingNow );
+	result.pushKV( "weight", (int64_t)( nWeight / COIN ) );
+	result.pushKV( "netstakeweight", (int64_t)( nNetworkWeight / COIN ) );
+	result.pushKV( "expectedtime", (int64_t)nExpectedTime );
+    return result;
 },
     };
 }
@@ -4652,6 +4707,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "getreceivedbyaddress",             &getreceivedbyaddress,          {"address","minconf"} },
     { "wallet",             "getreceivedbylabel",               &getreceivedbylabel,            {"label","minconf"} },
     { "wallet",             "gettransaction",                   &gettransaction,                {"txid","include_watchonly","verbose"} },
+    { "wallet",             "getstakingstatus",                 &getstakingstatus,              {} },
     { "wallet",             "getunconfirmedbalance",            &getunconfirmedbalance,         {} },
     { "wallet",             "getbalances",                      &getbalances,                   {} },
     { "wallet",             "getwalletinfo",                    &getwalletinfo,                 {} },

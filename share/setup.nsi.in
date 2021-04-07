@@ -1,4 +1,4 @@
-Name "@PACKAGE_NAME@ (64-bit)"
+Name "@PACKAGE_NAME@ (@WINDOWS_BITS@-bit)"
 
 RequestExecutionLevel highest
 SetCompressor /SOLID lzma
@@ -33,7 +33,9 @@ SetDateSave off
 # Included files
 !include Sections.nsh
 !include MUI2.nsh
+!if "@WINDOWS_BITS@" == "64"
 !include x64.nsh
+!endif
 
 # Variables
 Var StartMenuGroup
@@ -51,7 +53,12 @@ Var StartMenuGroup
 !insertmacro MUI_LANGUAGE English
 
 # Installer attributes
-InstallDir $PROGRAMFILES64\XUEZ
+!if "@WINDOWS_BITS@" == "64"
+InstallDir $PROGRAMFILES64\Xuez
+!else
+InstallDir $PROGRAMFILES\Xuez
+!endif
+OutFile @abs_top_srcdir@/xuez-${VERSION}-win@WINDOWS_BITS@-setup.exe
 CRCCheck on
 XPStyle on
 BrandingText " "
@@ -136,7 +143,11 @@ Section -un.post UNSEC0001
     DeleteRegKey HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$(^Name)"
     Delete /REBOOTOK "$SMPROGRAMS\$StartMenuGroup\Uninstall $(^Name).lnk"
     Delete /REBOOTOK "$SMPROGRAMS\$StartMenuGroup\$(^Name).lnk"
+!if "@WINDOWS_BITS@" == "64"
     Delete /REBOOTOK "$SMPROGRAMS\$StartMenuGroup\@PACKAGE_NAME@ (testnet, 64-bit).lnk"
+!else
+    Delete /REBOOTOK "$SMPROGRAMS\$StartMenuGroup\@PACKAGE_NAME@ (testnet, 32-bit).lnk"
+!endif
     Delete /REBOOTOK "$SMSTARTUP\XUEZ.lnk"
     Delete /REBOOTOK $INSTDIR\uninstall.exe
     Delete /REBOOTOK $INSTDIR\debug.log
@@ -158,6 +169,7 @@ SectionEnd
 # Installer functions
 Function .onInit
     InitPluginsDir
+!if "@WINDOWS_BITS@" == "64"
     ${If} ${RunningX64}
       ; disable registry redirection (enable access to 64-bit portion of registry)
       SetRegView 64
@@ -165,6 +177,7 @@ Function .onInit
       MessageBox MB_OK|MB_ICONSTOP "Cannot install 64-bit version on a 32-bit system."
       Abort
     ${EndIf}
+!endif
 FunctionEnd
 
 # Uninstaller functions

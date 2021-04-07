@@ -1,0 +1,106 @@
+git clone https://github.com/XUEZ/Xuez-Core.git && cd XUEZ-Core
+ 
+sh autogen.sh
+
+##  get the verion of this branch
+getversion()
+{
+  VERST=$(grep -E '#define CLIENT_VERSION_(MAJOR|MINOR|REVISION|BUILD)' $PWD/src/config/xuez-config.h)
+  echo $VERST | grep -E 'MAJOR' | grep -ohE '[0-9]'| tr -d '[:space:]'
+}
+
+
+## works for new XUEZ
+./configure --disable-tests --disable-dependency-tracking --with-gui=qt5 --with-boost=/usr/local/Cellar/boost/1.71.0 --with-boost-libdir=/usr/local/Cellar/boost/1.71.0/lib --enable-c++17 \
+CXXFLAGS="-pipe -O2 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk \
+-mmacosx-version-min=10.11 -Wno-unused-variable -Wno-unused-parameter -I/usr/local/Cellar/boost/1.71.0/include -I/usr/local/Cellar/libevent/2.1.12/include"
+
+make -j4 && make deploy
+
+mv src/xuezd src/xuez-cli src/xuez-wallet src/xuez-tx . && strip xuezd xuez-cli xuez-wallet xuez-tx
+tar czf xuez-v2002-macOS-cli.tgz xuezd xuez-cli xuez-wallet xuez-tx && rm xuezd xuez-cli xuez-wallet xuez-tx
+
+depends building:
+
+# Set the default mingw32 g++ compiler option to posix.
+sudo update-alternatives --config x86_64-w64-mingw32-g++
+
+
+CONFIG_SITE=$PWD/depends/x86_64-apple-darwin16/share/config.site ./configure --prefix=/ --with-gui=qt5 --disable-tests
+
+# WIN32
+cd depends && make HOST=i686-w64-mingw32 -j4
+CONFIG_SITE=$PWD/depends/i686-w64-mingw32/share/config.site ./configure --prefix=/ --with-gui=qt5 --disable-tests
+
+# WIN64
+
+CONFIG_SITE=$PWD/depends/x86_64-w64-mingw32/share/config.site ./configure --prefix=/ --with-gui=qt5 --disable-tests
+make -j4 V=1 && make deploy
+
+mv src/xuezd.exe src/xuez-cli.exe  src/xuez-wallet.exe  src/xuez-tx.exe  . && /usr/bin/x86_64-w64-mingw32-strip xuezd.exe xuez-cli.exe xuez-wallet.exe xuez-tx.exe
+zip xuez-v2002-win64-cli.zip xuezd.exe xuez-cli.exe xuez-wallet.exe xuez-tx.exe && rm xuezd.exe xuez-cli.exe xuez-wallet.exe xuez-tx.exe
+
+#Linux
+cd depends && make -j4
+CONFIG_SITE=$PWD/depends/x86_64-pc-linux-gnu/share/config.site ./configure --prefix=/ --with-gui=qt5 --disable-tests
+make -j4 V=1
+
+mv src/xuezd src/xuez-cli src/xuez-wallet src/xuez-tx . && strip xuezd xuez-cli xuez-wallet xuez-tx
+tar czf xuez-v2002-linux-cli.tgz xuezd xuez-cli xuez-wallet xuez-tx && rm xuezd xuez-cli xuez-wallet xuez-tx
+
+mv src/qt/xuez-qt . && strip xuez-qt && tar czf xuez-v2002-linux-gui.tgz xuez-qt && rm xuez-qt
+
+
+#Android
+mkdir -p ~/android && cd ~/android
+~/android/cmdlinetools/bin/sdkmanager --install "platform-tools" "platforms;android-29" "cmdline-tools;latest" "build-tools;31.0.0-rc1" "cmake;3.10.2.4988404" "ndk;22.0.7026061" --sdk_root=~/sdk
+
+cd depends
+export ANDROID_SDK=~/android/sdk/platforms/android-29
+export ANDROID_NDK=~/android/sdk/ndk
+export ANDROID_API_LEVEL=29
+export ANDROID_TOOLCHAIN_BIN=~/ndk/ndk/22.0.7026061/toolchains/llvm/prebuilt/linux-x86_64/bin
+make -j4 V=1 HOST=armv7a-linux-androideabi
+or
+make -j4 V=1 HOST=armv7a-linux-androideabi \
+ANDROID_TOOLCHAIN_BIN=~/android/ndk/ndk/22.0.7026061/toolchains/llvm/prebuilt/linux-x86_64/bin \
+ANDROID_API_LEVEL=29 \
+ANDROID_NDK=~/android/ndk/ndk \
+ANDROID_SDK=~/android/sdk/platforms/android-29
+
+
+Android x86 64 bit
+cd depends
+make HOST=x86_64-linux-android -j4
+
+
+
+#ARM 32
+cd depends && make HOST=arm-linux-gnueabihf -j4
+CONFIG_SITE=$PWD/depends/arm-linux-gnueabihf/share/config.site ./configure --prefix=/ --with-gui=qt5 --disable-tests
+make -j4 V=1
+
+mv src/xuezd src/xuez-cli src/xuez-wallet src/xuez-tx . && arm-linux-gnueabihf-strip xuezd xuez-cli xuez-wallet xuez-tx
+tar czf xuez-v2002-arm32-cli.tgz xuezd xuez-cli xuez-wallet xuez-tx && rm xuezd xuez-cli xuez-wallet xuez-tx
+
+mv src/qt/xuez-qt . && arm-linux-gnueabihf-strip xuez-qt && tar czf xuez-v2002-arm32-gui.tgz xuez-qt && rm xuez-qt
+
+#ARM 64
+cd depends && make HOST=aarch64-linux-gnu -j4
+CONFIG_SITE=$PWD/depends/aarch64-linux-gnu/share/config.site ./configure --prefix=/ --with-gui=qt5 --disable-tests
+make -j4 V=1
+
+mv src/xuezd src/xuez-cli src/xuez-wallet src/xuez-tx . && aarch64-linux-gnu-strip xuezd xuez-cli xuez-wallet xuez-tx
+tar czf xuez-v2002-arm64-cli.tgz xuezd xuez-cli xuez-wallet xuez-tx && rm xuezd xuez-cli xuez-wallet xuez-tx
+
+mv src/qt/xuez-qt . && aarch64-linux-gnu-strip xuez-qt && tar czf xuez-v2002-arm64-gui.tgz xuez-qt && rm xuez-qt
+
+#### old line
+
+./configure --disable-tests --disable-dependency-tracking --with-gui=qt5 --with-boost=/usr/local/opt/boost@1.60 --with-boost-libdir=/usr/local/opt/boost@1.60/lib \
+--with-boost-system=boost_system-mt --with-boost-filesystem=boost_filesystem-mt \
+CXXFLAGS="-pipe -O2 -std=c++11 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk \
+-mmacosx-version-min=10.11 -Wno-unused-variable -Wno-unused-parameter -fPIC -I/usr/local/Cellar/openssl@1.0/1.0.2t/include -I/usr/local/opt/boost@1.60/include" \
+LIBS="$LIBS -L/usr/local/Cellar/openssl@1.0/1.0.2t/lib -lssl" \
+SSL_CFLAGS=-I/usr/local/Cellar/openssl@1.0/1.0.2t/include CRYPTO_CFLAGS=-I/usr/local/Cellar/openssl@1.0/1.0.2t/include \
+SSL_LIBS=-L/usr/local/Cellar/openssl@1.0/1.0.2t/lib CRYPTO_LIBS=-L/usr/local/Cellar/openssl@1.0/1.0.2t/lib

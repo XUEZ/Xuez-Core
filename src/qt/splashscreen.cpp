@@ -29,13 +29,14 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     QWidget(nullptr, f), curAlignment(0)
 {
     // set reference point, paddings
-    int paddingRight            = 50;
-    int paddingTop              = 50;
+    int paddingRight            = 85;
+    int paddingTop              = 65;
     int titleVersionVSpace      = 17;
     int titleCopyrightVSpace    = 40;
 
     float fontFactor            = 1.0;
     float devicePixelRatio      = 1.0;
+
     devicePixelRatio = static_cast<QGuiApplication*>(QCoreApplication::instance())->devicePixelRatio();
 
     // define text to place
@@ -47,7 +48,17 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     QString font            = QApplication::font().toString();
 
     // create a bitmap according to device pixelratio
-    QSize splashSize(480*devicePixelRatio,320*devicePixelRatio);
+#if defined(QT_QPA_PLATFORM_ANDROID)
+    int splashWidth = QGuiApplication::primaryScreen()->availableGeometry().width()*2;
+    int splashHeight = QGuiApplication::primaryScreen()->availableGeometry().height()*2;
+    devicePixelRatio = 2.0;
+    paddingRight            = 145;
+    paddingTop              = 315;
+#else
+    int splashWidth = 480*devicePixelRatio;
+    int splashHeight = 320*devicePixelRatio;
+#endif
+    QSize splashSize(splashWidth,splashHeight);
     pixmap = QPixmap(splashSize);
 
     // change to HiDPI if it makes sense
@@ -64,7 +75,22 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     pixPaint.fillRect(rGradient, gradient);
 
     // draw the xuez icon, expected size of PNG: 1024x1024
-    QRect rectIcon(QPoint(-150,-122), QSize(430,430));
+#if defined(QT_QPA_PLATFORM_ANDROID)
+    //QMessageBox msg;
+    //QString msgtxt = QString ("spH %1, spW %2").arg(splashHeight).arg(splashWidth);
+    //msg.setText(msgtxt);
+    //msg.exec();
+    int rectIconDims = 235, rectIcontop = 240, rectIconleft = 40;
+    if ( splashWidth < 961 ){
+	rectIconDims = 200;
+	rectIcontop  = 70;
+        paddingRight = 127;
+        rectIconleft = (splashWidth/4)-100;
+    }
+    QRect rectIcon(QPoint(rectIconleft,rectIcontop), QSize(rectIconDims,rectIconDims));
+#else
+    QRect rectIcon(QPoint(-160,-132), QSize(430,430));
+#endif
 
     const QSize requiredSize(1024,1024);
     QPixmap icon(networkStyle->getAppIcon().pixmap(requiredSize));
@@ -123,8 +149,7 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     QRect r(QPoint(), QSize(pixmap.size().width()/devicePixelRatio,pixmap.size().height()/devicePixelRatio));
     resize(r.size());
     setFixedSize(r.size());
-    move(QGuiApplication::primaryScreen()->geometry().center() - r.center());
-
+    setGeometry(QStyle::alignedRect(Qt::LeftToRight, Qt::AlignCenter, r.size(), QGuiApplication::primaryScreen()->availableGeometry()));
     installEventFilter(this);
 
     GUIUtil::handleCloseWindowShortcut(this);
@@ -181,10 +206,7 @@ static void InitMessage(SplashScreen *splash, const std::string &message)
 
 static void ShowProgress(SplashScreen *splash, const std::string &title, int nProgress, bool resume_possible)
 {
-    InitMessage(splash, title + std::string("\n") +
-            (resume_possible ? _("(press q to shutdown and continue later)").translated
-                                : _("press q to shutdown").translated) +
-            strprintf("\n%d", nProgress) + "%");
+    InitMessage( splash, title + strprintf("%d", nProgress) + "%" + std::string("\n") + (resume_possible ? _("(press q to shutdown and continue later)").translated : _("press q to shutdown").translated) );
 }
 
 void SplashScreen::subscribeToCoreSignals()

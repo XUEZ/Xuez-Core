@@ -38,6 +38,8 @@ class WalletFrame;
 class WalletModel;
 class HelpMessageDialog;
 class ModalOverlay;
+class CBlockIndex;
+
 enum class SynchronizationState;
 
 namespace interfaces {
@@ -167,6 +169,7 @@ private:
 
     QLabel *m_wallet_selector_label = nullptr;
     QComboBox* m_wallet_selector = nullptr;
+    QLabel* labelStakingIcon = nullptr;
 
     QSystemTrayIcon* trayIcon = nullptr;
     const std::unique_ptr<QMenu> trayIconMenu;
@@ -288,6 +291,12 @@ public Q_SLOTS:
 
     /** Show open dialog */
     void openClicked();
+    
+    //staking functions
+    void setStakingStatus();
+    double GetPoSKernelPS();
+    double GetDifficulty(const CBlockIndex* blockindex);
+
 #endif // ENABLE_WALLET
     /** Show configuration dialog */
     void optionsClicked();

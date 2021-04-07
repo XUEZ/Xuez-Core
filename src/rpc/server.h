@@ -7,6 +7,7 @@
 #define BITCOIN_RPC_SERVER_H
 
 #include <amount.h>
+#include <validation.h>
 #include <rpc/request.h>
 #include <rpc/util.h>
 
@@ -184,5 +185,6 @@ std::string JSONRPCExecBatch(const JSONRPCRequest& jreq, const UniValue& vReq);
 
 // Retrieves any serialization flags requested in command line argument
 int RPCSerializationFlags();
+
 
 #endif // BITCOIN_RPC_SERVER_H

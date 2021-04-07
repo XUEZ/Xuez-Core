@@ -466,6 +466,12 @@ int GuiMain(int argc, char* argv[])
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
 
+#if defined(QT_QPA_PLATFORM_ANDROID)
+    QApplication::setAttribute(Qt::AA_DontUseNativeMenuBar);
+    QApplication::setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+    QApplication::setAttribute(Qt::AA_DontUseNativeDialogs);
+#endif
+
     XUEZApplication app;
 
     /// 2. Parse command-line options. We do this after qt in order to show an error if there are problems parsing these

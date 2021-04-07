@@ -6,7 +6,6 @@
 #define BITCOIN_WALLET_RPCWALLET_H
 
 #include <span.h>
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -17,9 +16,12 @@ class JSONRPCRequest;
 class LegacyScriptPubKeyMan;
 class UniValue;
 class CTransaction;
+class CBlockIndex;
+class CChainState;
+class CBlock;
+
 struct PartiallySignedTransaction;
 struct WalletContext;
-
 Span<const CRPCCommand> GetWalletRPCCommands();
 
 /**
@@ -36,4 +38,5 @@ LegacyScriptPubKeyMan& EnsureLegacyScriptPubKeyMan(CWallet& wallet, bool also_cr
 
 RPCHelpMan getaddressinfo();
 RPCHelpMan signrawtransactionwithwallet();
+
 #endif //BITCOIN_WALLET_RPCWALLET_H

@@ -6,6 +6,7 @@
 #include <wallet/wallet.h>
 
 #include <chain.h>
+#include <coins.h>
 #include <consensus/consensus.h>
 #include <consensus/validation.h>
 #include <fs.h>
@@ -33,6 +34,7 @@
 #include <wallet/coincontrol.h>
 #include <wallet/fees.h>
 
+#include <validation.h>
 #include <univalue.h>
 
 #include <algorithm>
@@ -4713,6 +4715,47 @@ bool CWallet::GetBlockSigningPubKey(const CBlock& block, CPubKey& pubkey, bool& 
 
     return true;
 }
+
+int64_t CWallet::GetStakeWeight() const
+{
+    std::set<CInputCoin> setCoins;
+    setCoins.clear();
+    LOCK(cs_wallet);
+    
+    if ( !SelectStakeCoins( setCoins ) )
+        return 0;
+
+    if ( setCoins.empty() )
+        return 0;
+
+    int64_t nCurrentTime = GetTime();
+    int64_t nStakeMinAge = Params().GetConsensus().nStakeMinAge[1];
+    int64_t nWeight = 0;
+    for ( const CInputCoin& pcoin : setCoins )
+    {
+		const CWalletTx *tx = GetWalletTx( pcoin.outpoint.hash );
+		if( tx ){
+			uint64_t txTime = tx->GetTxTime() + nStakeMinAge;
+			if ( txTime < nCurrentTime ){
+				//WalletLogPrintf("Value: %d, time: %@\n", pcoin.effective_value / COIN, txTime );
+				nWeight += pcoin.effective_value;
+			}
+		}
+    }
+    return nWeight;
+}
+
+int64_t CWallet::GetNetworkStakeWeight() const
+{
+	LOCK(cs_wallet);
+    return m_network_weight;
+}
+
+void CWallet::SetNetStakeWeight( int64_t netWeight )
+{
+    LOCK(cs_wallet);
+	m_network_weight = netWeight;
+}     
 
 // peercoin: sign block
 bool CWallet::SignBlock(CBlock& block, const CPubKey& pubkey) const

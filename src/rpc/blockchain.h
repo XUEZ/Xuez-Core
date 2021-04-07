@@ -18,6 +18,7 @@ class CBlockIndex;
 class CTxMemPool;
 class ChainstateManager;
 class UniValue;
+
 struct NodeContext;
 namespace util {
 class Ref;

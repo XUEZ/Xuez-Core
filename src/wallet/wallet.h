@@ -1279,6 +1279,13 @@ public:
 
     //! Add a descriptor to the wallet, return a ScriptPubKeyMan & associated output type
     ScriptPubKeyMan* AddWalletDescriptor(WalletDescriptor& desc, const FlatSigningProvider& signing_provider, const std::string& label, bool internal);
+    
+    //staking functions  
+	int64_t m_network_weight;
+    int64_t GetStakeWeight() const;
+    int64_t GetNetworkStakeWeight() const;
+    void SetNetStakeWeight( int64_t netWeight );
+    
 };
 
 /**

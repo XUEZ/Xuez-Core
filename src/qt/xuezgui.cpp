@@ -24,6 +24,8 @@
 #include <qt/walletframe.h>
 #include <qt/walletmodel.h>
 #include <qt/walletview.h>
+#include <wallet/wallet.h>
+#include <rpc/server.h>
 #endif // ENABLE_WALLET
 
 #ifdef Q_OS_MAC
@@ -63,7 +65,6 @@
 #include <QVBoxLayout>
 #include <QWindow>
 
-
 const std::string XUEZGUI::DEFAULT_UIPLATFORM =
 #if defined(Q_OS_MAC)
         "macosx"
@@ -73,6 +74,7 @@ const std::string XUEZGUI::DEFAULT_UIPLATFORM =
         "other"
 #endif
         ;
+
 
 XUEZGUI::XUEZGUI(interfaces::Node& node, const PlatformStyle *_platformStyle, const NetworkStyle *networkStyle, QWidget *parent) :
     QMainWindow(parent),
@@ -144,29 +146,35 @@ XUEZGUI::XUEZGUI(interfaces::Node& node, const PlatformStyle *_platformStyle, co
     frameBlocks->setContentsMargins(0,0,0,0);
     frameBlocks->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
     QHBoxLayout *frameBlocksLayout = new QHBoxLayout(frameBlocks);
-    frameBlocksLayout->setContentsMargins(3,0,3,0);
-    frameBlocksLayout->setSpacing(3);
+    frameBlocksLayout->setContentsMargins(3,0,8,0);
+    frameBlocksLayout->setSpacing(4);
     unitDisplayControl = new UnitDisplayStatusBarControl(platformStyle);
     labelWalletEncryptionIcon = new QLabel();
     labelWalletHDStatusIcon = new QLabel();
     labelProxyIcon = new GUIUtil::ClickableLabel();
     connectionsControl = new GUIUtil::ClickableLabel();
     labelBlocksIcon = new GUIUtil::ClickableLabel();
+    labelStakingIcon = new QLabel();
     if(enableWallet)
     {
-        frameBlocksLayout->addStretch();
         frameBlocksLayout->addWidget(unitDisplayControl);
         frameBlocksLayout->addStretch();
         frameBlocksLayout->addWidget(labelWalletEncryptionIcon);
         frameBlocksLayout->addWidget(labelWalletHDStatusIcon);
     }
+    
+    frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(labelProxyIcon);
     frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(connectionsControl);
     frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(labelBlocksIcon);
     frameBlocksLayout->addStretch();
-
+	if(enableWallet){
+		frameBlocksLayout->addWidget(labelStakingIcon);
+		labelStakingIcon->setPixmap(QIcon(":/icons/staking_inactive").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
+		labelStakingIcon->show();
+	}
     // Progress bar and label for blocks download
     progressBarLabel = new QLabel();
     progressBarLabel->setVisible(false);
@@ -208,6 +216,9 @@ XUEZGUI::XUEZGUI(interfaces::Node& node, const PlatformStyle *_platformStyle, co
 #ifdef ENABLE_WALLET
     if(enableWallet) {
         connect(walletFrame, &WalletFrame::requestedSyncWarningInfo, this, &XUEZGUI::showModalOverlay);
+		//QTimer* timerStakingIcon = new QTimer(labelStakingIcon);
+		//connect(timerStakingIcon, SIGNAL(timeout()), this, SLOT(setStakingStatus()));
+		//timerStakingIcon->start((60 * 1000));
     }
 #endif
 
@@ -216,6 +227,7 @@ XUEZGUI::XUEZGUI(interfaces::Node& node, const PlatformStyle *_platformStyle, co
 #endif
 
     GUIUtil::handleCloseWindowShortcut(this);
+    
 }
 
 XUEZGUI::~XUEZGUI()
@@ -698,7 +710,7 @@ void XUEZGUI::removeWallet(WalletModel* walletModel)
 
     labelWalletHDStatusIcon->hide();
     labelWalletEncryptionIcon->hide();
-
+    labelStakingIcon->hide();
     int index = m_wallet_selector->findData(QVariant::fromValue(walletModel));
     m_wallet_selector->removeItem(index);
     if (m_wallet_selector->count() == 0) {
@@ -1039,6 +1051,9 @@ void XUEZGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVerifi
             walletFrame->showOutOfSyncWarning(false);
             modalOverlay->showHide(true, true);
         }
+		setStakingStatus();
+        //LogPrintf("Updated staking status: %d\n", count);
+        
 #endif // ENABLE_WALLET
 
         progressBarLabel->setVisible(false);
@@ -1463,6 +1478,119 @@ bool XUEZGUI::isPrivacyModeActivated() const
 {
     assert(m_mask_values_action);
     return m_mask_values_action->isChecked();
+}
+
+void XUEZGUI::setStakingStatus()
+{		
+    if (!walletFrame) return;
+	WalletModel* const wallet_model = walletFrame->currentWalletModel();
+	if (!wallet_model || wallet_model->getWalletName().isEmpty()) return;
+    const std::string nWalletName ( wallet_model->getWalletName().toStdString() );
+	std::shared_ptr<CWallet> const wallet = GetWallet( nWalletName );
+	if (!wallet) return;
+		
+	const CWallet* const pwallet = wallet.get();
+	if (!pwallet) return;
+	
+	labelStakingIcon->show();
+	
+	int64_t nWeight = pwallet->GetStakeWeight();
+	
+	bool nStakingEnabled = (!gArgs.GetBoolArg("-staking", true)) ? false : true;
+	QString stakeMsg("<i>Staking is not active</i>");
+
+	if ( nWeight > 0 && nStakingEnabled ) {
+	    int64_t nNetworkWeight = ( 1.1429 * GetPoSKernelPS() );
+	    wallet.get()->m_network_weight = nNetworkWeight;
+    	unsigned nEstimateTime = 1.0455 * 64 * nNetworkWeight / nWeight;
+		
+		QString stakeTime;
+		if (nEstimateTime < 60)
+		{
+			stakeTime = tr("%n second(s)", "", nEstimateTime);
+		}
+		else if (nEstimateTime < 60*60*2)
+		{
+			stakeTime = tr("%n minute(s)", "", nEstimateTime/60);
+		}
+		else if (nEstimateTime < 24*60*60)
+		{
+			stakeTime = tr("%n hour(s)", "", nEstimateTime/(60*60));
+		}
+		else
+		{
+			stakeTime = tr("%n day(s)", "", nEstimateTime/(60*60*24));
+		}        
+	
+		nWeight /= COIN;
+		nNetworkWeight /= COIN;
+		
+		labelStakingIcon->setPixmap(QIcon(":/icons/staking_active").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
+		stakeMsg = tr("<b>Staking is:</b> Active<br>"
+					"<b>Your weight is:</b> %1<br>"
+					"<b>Network weight is:</b> %2<br>"
+					"<b>Est. time to stake:</b> %3"
+		).arg(nWeight).arg(nNetworkWeight).arg(stakeTime);
+	} else {
+		labelStakingIcon->setPixmap(QIcon(":/icons/staking_inactive").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
+		if (!m_node.getNetworkActive())
+			stakeMsg = tr("<i>Not staking because wallet is offline</i>");
+        else if ( nWeight <= 0 )
+			stakeMsg = tr("<i>Not staking because you don't have mature coins</i>");	
+		else if (pwallet->IsLocked())
+			stakeMsg = tr("<i>Not staking because wallet is locked</i>");
+	}
+	labelStakingIcon->setToolTip(stakeMsg);
+}
+
+double XUEZGUI::GetPoSKernelPS()
+{
+    int nPoSInterval = 80;
+    double dStakeKernelsTriedAvg = 0;
+    int nStakesHandled = 0, nStakesTime = 0;
+    CBlockIndex* pindex = ::ChainActive().Tip();
+    CBlockIndex* pindexPrevStake = NULL;
+    while (pindex && nStakesHandled < nPoSInterval)
+    {
+        if (pindex->IsProofOfStake())
+        {
+            if (pindexPrevStake)
+            {
+                dStakeKernelsTriedAvg += GetDifficulty(pindexPrevStake) * 4294967296.0;
+                nStakesTime += pindexPrevStake->nTime - pindex->nTime;
+                nStakesHandled++;
+            }
+            pindexPrevStake = pindex;
+        }
+        pindex = pindex->pprev;
+    }
+    double result = 0;
+    if (nStakesTime)
+        result = dStakeKernelsTriedAvg / nStakesTime;
+    result *= 16;
+    return result;
+}
+
+double XUEZGUI::GetDifficulty(const CBlockIndex* blockindex)
+{
+    CHECK_NONFATAL(blockindex);
+
+    int nShift = (blockindex->nBits >> 24) & 0xff;
+    double dDiff =
+        (double)0x0000ffff / (double)(blockindex->nBits & 0x00ffffff);
+
+    while (nShift < 29)
+    {
+        dDiff *= 256.0;
+        nShift++;
+    }
+    while (nShift > 29)
+    {
+        dDiff /= 256.0;
+        nShift--;
+    }
+
+    return dDiff;
 }
 
 UnitDisplayStatusBarControl::UnitDisplayStatusBarControl(const PlatformStyle *platformStyle) :

@@ -210,4 +210,5 @@ QT_TRANSLATE_NOOP("xuez-core", "Verifying blocks..."),
 QT_TRANSLATE_NOOP("xuez-core", "Verifying wallet(s)..."),
 QT_TRANSLATE_NOOP("xuez-core", "Wallet needed to be rewritten: restart %s to complete"),
 QT_TRANSLATE_NOOP("xuez-core", "Warning: unknown new rules activated (versionbit %i)"),
+QT_TRANSLATE_NOOP("xuez-core", "Staking options:"),
 };

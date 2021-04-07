@@ -2,7 +2,7 @@ AC_PREREQ([2.69])
 define(_CLIENT_VERSION_MAJOR, 2)
 define(_CLIENT_VERSION_MINOR, 0)
 define(_CLIENT_VERSION_REVISION, 0)
-define(_CLIENT_VERSION_BUILD, 2)
+define(_CLIENT_VERSION_BUILD, 3)
 define(_CLIENT_VERSION_RC, 0)
 define(_CLIENT_VERSION_IS_RELEASE, true)
 define(_COPYRIGHT_YEAR, 2021)
@@ -591,21 +591,47 @@ AC_ARG_WITH([daemon],
 case $host in
   *mingw*)
      TARGET_OS=windows
-     AC_CHECK_LIB([kernel32], [GetModuleFileNameA],, AC_MSG_ERROR(libkernel32 missing))
-     AC_CHECK_LIB([user32],   [main],, AC_MSG_ERROR(libuser32 missing))
-     AC_CHECK_LIB([gdi32],    [main],, AC_MSG_ERROR(libgdi32 missing))
-     AC_CHECK_LIB([comdlg32], [main],, AC_MSG_ERROR(libcomdlg32 missing))
-     AC_CHECK_LIB([winmm],    [main],, AC_MSG_ERROR(libwinmm missing))
-     AC_CHECK_LIB([shell32],  [SHGetSpecialFolderPathW],, AC_MSG_ERROR(libshell32 missing))
-     AC_CHECK_LIB([comctl32], [main],, AC_MSG_ERROR(libcomctl32 missing))
-     AC_CHECK_LIB([ole32],    [CoCreateInstance],, AC_MSG_ERROR(libole32 missing))
-     AC_CHECK_LIB([oleaut32], [main],, AC_MSG_ERROR(liboleaut32 missing))
-     AC_CHECK_LIB([uuid],     [main],, AC_MSG_ERROR(libuuid missing))
-     AC_CHECK_LIB([advapi32], [CryptAcquireContextW],, AC_MSG_ERROR(libadvapi32 missing))
-     AC_CHECK_LIB([ws2_32],   [WSAStartup],, AC_MSG_ERROR(libws2_32 missing))
-     AC_CHECK_LIB([shlwapi],  [PathRemoveFileSpecW],, AC_MSG_ERROR(libshlwapi missing))
-     AC_CHECK_LIB([iphlpapi], [GetAdaptersAddresses],, AC_MSG_ERROR(libiphlpapi missing))
-
+     case $host in
+       i?86-*)
+			use_pkgconfig=no
+			WINDOWS_BITS=32
+			AC_SUBST(WINDOWS_BITS)
+			AC_CHECK_LIB([kernel32], [main],, AC_MSG_ERROR(libkernel32 missing))
+			AC_CHECK_LIB([user32],   [main],, AC_MSG_ERROR(libuser32 missing))
+			AC_CHECK_LIB([gdi32],    [main],, AC_MSG_ERROR(libgdi32 missing))
+			AC_CHECK_LIB([comdlg32], [main],, AC_MSG_ERROR(libcomdlg32 missing))
+			AC_CHECK_LIB([winmm],    [main],, AC_MSG_ERROR(libwinmm missing))
+			AC_CHECK_LIB([shell32],  [main],, AC_MSG_ERROR(libshell32 missing))
+			AC_CHECK_LIB([comctl32], [main],, AC_MSG_ERROR(libcomctl32 missing))
+			AC_CHECK_LIB([ole32],    [main],, AC_MSG_ERROR(libole32 missing))
+			AC_CHECK_LIB([oleaut32], [main],, AC_MSG_ERROR(liboleaut32 missing))
+			AC_CHECK_LIB([uuid],     [main],, AC_MSG_ERROR(libuuid missing))
+			AC_CHECK_LIB([advapi32], [main],, AC_MSG_ERROR(libadvapi32 missing))
+			AC_CHECK_LIB([ws2_32],   [main],, AC_MSG_ERROR(libws2_32 missing))
+			AC_CHECK_LIB([shlwapi],  [main],, AC_MSG_ERROR(libshlwapi missing))
+			AC_CHECK_LIB([iphlpapi], [main],, AC_MSG_ERROR(libiphlpapi missing))
+       	;;
+       x86_64-*)
+			WINDOWS_BITS=64
+			AC_SUBST(WINDOWS_BITS)
+			AC_CHECK_LIB([kernel32], [GetModuleFileNameA],, AC_MSG_ERROR(libkernel32 missing))
+			AC_CHECK_LIB([user32],   [main],, AC_MSG_ERROR(libuser32 missing))
+			AC_CHECK_LIB([gdi32],    [main],, AC_MSG_ERROR(libgdi32 missing))
+			AC_CHECK_LIB([comdlg32], [main],, AC_MSG_ERROR(libcomdlg32 missing))
+			AC_CHECK_LIB([winmm],    [main],, AC_MSG_ERROR(libwinmm missing))
+			AC_CHECK_LIB([shell32],  [SHGetSpecialFolderPathW],, AC_MSG_ERROR(libshell32 missing))
+			AC_CHECK_LIB([comctl32], [main],, AC_MSG_ERROR(libcomctl32 missing))
+			AC_CHECK_LIB([ole32],    [CoCreateInstance],, AC_MSG_ERROR(libole32 missing))
+			AC_CHECK_LIB([oleaut32], [main],, AC_MSG_ERROR(liboleaut32 missing))
+			AC_CHECK_LIB([uuid],     [main],, AC_MSG_ERROR(libuuid missing))
+			AC_CHECK_LIB([advapi32], [CryptAcquireContextW],, AC_MSG_ERROR(libadvapi32 missing))
+			AC_CHECK_LIB([ws2_32],   [WSAStartup],, AC_MSG_ERROR(libws2_32 missing))
+			AC_CHECK_LIB([shlwapi],  [PathRemoveFileSpecW],, AC_MSG_ERROR(libshlwapi missing))
+			AC_CHECK_LIB([iphlpapi], [GetAdaptersAddresses],, AC_MSG_ERROR(libiphlpapi missing))
+       ;;
+       *) AC_MSG_ERROR("Could not determine win32/win64 for installer") ;;
+     esac
+     
      dnl -static is interpreted by libtool, where it has a different meaning.
      dnl In libtool-speak, it's -all-static.
      AX_CHECK_LINK_FLAG([[-static]],[LIBTOOL_APP_LDFLAGS="$LIBTOOL_APP_LDFLAGS -all-static"])
@@ -691,6 +717,21 @@ case $host in
    *android*)
      dnl make sure android stays above linux for hosts like *linux-android*
      TARGET_OS=android
+     case $host in
+       *x86_64*)
+          ANDROID_ARCH=x86_64
+          ;;
+        *aarch64*)
+          ANDROID_ARCH=arm64-v8a
+          ;;
+        *armv7a*)
+          ANDROID_ARCH=armeabi-v7a
+          ;;
+        *i686*)
+          ANDROID_ARCH=i686
+          ;;
+        *) AC_MSG_ERROR("Could not determine Android arch") ;;
+      esac
      ;;
    *linux*)
      TARGET_OS=linux
@@ -1214,7 +1255,7 @@ else
   BITCOIN_QT_INIT
 
   dnl sets $xuez_enable_qt, $xuez_enable_qt_test, $xuez_enable_qt_dbus
-  BITCOIN_QT_CONFIGURE([5.5.1])
+  BITCOIN_QT_CONFIGURE([5.9.8])
 
   dnl Keep a copy of the original $QT_INCLUDES and use it when invoking qt's moc
   QT_INCLUDES_UNSUPPRESSED=$QT_INCLUDES
@@ -1690,6 +1731,7 @@ AC_SUBST(HAVE_BUILTIN_PREFETCH)
 AC_SUBST(HAVE_MM_PREFETCH)
 AC_SUBST(HAVE_STRONG_GETAUXVAL)
 AC_SUBST(HAVE_WEAK_GETAUXVAL)
+AC_SUBST(ANDROID_ARCH)
 AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile share/setup.nsi share/qt/Info.plist test/config.ini])
 AC_CONFIG_FILES([contrib/devtools/split-debug.sh],[chmod +x contrib/devtools/split-debug.sh])
 AM_COND_IF([HAVE_DOXYGEN], [AC_CONFIG_FILES([doc/Doxyfile])])

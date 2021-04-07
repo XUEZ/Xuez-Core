@@ -474,6 +474,7 @@ RPCConsole::RPCConsole(interfaces::Node& node, const PlatformStyle *_platformSty
     connect(ui->fontBiggerButton, &QPushButton::clicked, this, &RPCConsole::fontBigger);
     connect(ui->fontSmallerButton, &QPushButton::clicked, this, &RPCConsole::fontSmaller);
     connect(ui->btnClearTrafficGraph, &QPushButton::clicked, ui->trafficGraph, &TrafficGraphWidget::clear);
+    connect(ui->closeButton, &QPushButton::clicked, this, &RPCConsole::close);
 
     // disable the wallet selector by default
     ui->WalletSelector->setVisible(false);
