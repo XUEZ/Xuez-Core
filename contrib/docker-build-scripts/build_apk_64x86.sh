@@ -28,7 +28,7 @@ echo "Fallback to default values in env (if not yet set)"
 export MAKEJOBS=${MAKEJOBS:--j4}
 export BASE_SCRATCH_DIR=${BASE_SCRATCH_DIR:-$BASE_ROOT_DIR/ci/scratch}
 export HOST=${HOST:-$("$BASE_ROOT_DIR/depends/config.guess")}
-export CONTAINER_NAME=ubuntu_build
+export CONTAINER_NAME=xuez_build
 export DOCKER_NAME_TAG=ubuntu:18.04
 export DEBIAN_FRONTEND=noninteractive
 export CCACHE_SIZE=${CCACHE_SIZE:-100M}

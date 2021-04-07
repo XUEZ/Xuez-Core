@@ -10,7 +10,6 @@ export PACKAGES="clang llvm unzip"
 # The root dir.
 BASE_ROOT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../../ >/dev/null 2>&1 && pwd )
 export BASE_ROOT_DIR
-#VER=$(head -n 20 $BASE_ROOT_DIR/configure.ac | grep -E 'define\(_CLIENT_VERSION_(MAJOR|MINOR|REVISION|BUILD)' |  grep -ohE '[0-9]' | tr -d '[:space:]')
 VER=$(head -n 10 configure.ac |  sed -rn "s/define\(_CLIENT_VERSION_(MAJOR|MINOR|REVISION|BUILD),\s([0-9]?).*/\2./p" | tr -d '[:space:]' | sed 's/.$//')
 export VER
 
@@ -25,7 +24,7 @@ export MAKEJOBS=${MAKEJOBS:--j4}
 export BASE_SCRATCH_DIR=${BASE_SCRATCH_DIR:-$BASE_ROOT_DIR/ci/scratch}
 export HOST=${HOST:-$("$BASE_ROOT_DIR/depends/config.guess")}
 export DEBIAN_FRONTEND=noninteractive
-export CONTAINER_NAME=ubuntu_build
+export CONTAINER_NAME=xuez_build
 export DOCKER_NAME_TAG=ubuntu:18.04
 export CCACHE_SIZE=${CCACHE_SIZE:-100M}
 export CCACHE_TEMPDIR=${CCACHE_TEMPDIR:-/tmp/.ccache-temp}
