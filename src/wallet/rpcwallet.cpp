@@ -961,7 +961,6 @@ static RPCHelpMan getstakingstatus()
 			nExpectedTime = 1.0455 * 64 * nNetworkWeight / nWeight;
 		}
 		nStakingNow = ( ( nWeight + nNetworkWeight ) > 0 ) ? 1 : 0;
-		nExpectedTime = ( nWeight > 0 ) ? ( ( nNetworkWeight / nWeight ) * 11.8 ) : 0;
 	}
     UniValue result(UniValue::VOBJ);
     result.pushKV( "enabled", (bool)nStakingEnabled );
