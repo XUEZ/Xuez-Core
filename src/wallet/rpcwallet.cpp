@@ -962,11 +962,13 @@ static RPCHelpMan getstakingstatus()
 		}
 		nStakingNow = ( ( nWeight + nNetworkWeight ) > 0 ) ? 1 : 0;
 	}
+	nWeight /= COIN;
+	nNetworkWeight /= COIN;
     UniValue result(UniValue::VOBJ);
     result.pushKV( "enabled", (bool)nStakingEnabled );
 	result.pushKV( "staking", (int64_t)nStakingNow );
-	result.pushKV( "weight", (int64_t)( nWeight / COIN ) );
-	result.pushKV( "netstakeweight", (int64_t)( nNetworkWeight / COIN ) );
+	result.pushKV( "weight", (int64_t)nWeight );
+	result.pushKV( "netstakeweight", (int64_t)nNetworkWeight );
 	result.pushKV( "expectedtime", (int64_t)nExpectedTime );
     return result;
 },
