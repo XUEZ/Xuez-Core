@@ -86,7 +86,7 @@ DOCKER_EXEC () {
 export -f DOCKER_EXEC
 
 COPYBINS () {
-  docker cp $CONTAINER_NAME:$BASE_ROOT_DIR/xuez-v$VER-win64-setup.exe xuez-v$VER-win64-setup.exe
+  docker cp $CONTAINER_NAME:$BASE_ROOT_DIR/xuez-$VER-win64-setup.exe xuez-v$VER-win64-setup.exe
   DOCKER_EXEC rm -rf \$\(ls $BASE_ROOT_DIR/*setup*exe\)
 }
 
