@@ -4745,18 +4745,6 @@ int64_t CWallet::GetStakeWeight() const
     return nWeight;
 }
 
-int64_t CWallet::GetNetworkStakeWeight() const
-{
-	LOCK(cs_wallet);
-    return m_network_weight;
-}
-
-void CWallet::SetNetStakeWeight( int64_t netWeight )
-{
-    LOCK(cs_wallet);
-	m_network_weight = netWeight;
-}     
-
 // peercoin: sign block
 bool CWallet::SignBlock(CBlock& block, const CPubKey& pubkey) const
 {

@@ -689,11 +689,32 @@ xuez_tx_LDADD += $(BOOST_LIBS)
 #
 
 # xuez-wallet binary #
+xuez_wal_ldadd = \
+  $(LIBBITCOIN_WALLET) \
+  $(LIBBITCOIN_SERVER) \
+  $(LIBBITCOIN_COMMON) \
+  $(LIBBITCOIN_UTIL) \
+  $(LIBUNIVALUE) \
+  $(LIBBITCOIN_ZMQ) \
+  $(LIBBITCOIN_CONSENSUS) \
+  $(LIBBITCOIN_CRYPTO) \
+  $(LIBLEVELDB) \
+  $(LIBLEVELDB_SSE42) \
+  $(LIBMEMENV) \
+  $(LIBSECP256K1) \
+  $(BOOST_LIBS) \
+  $(BDB_LIBS) \
+  $(MINIUPNPC_LIBS) \
+  $(EVENT_PTHREADS_LIBS) \
+  $(EVENT_LIBS) \
+  $(ZMQ_LIBS) \
+  $(SQLITE_LIBS)
+  
 xuez_wallet_SOURCES = xuez-wallet.cpp
 xuez_wallet_CPPFLAGS = $(xuez_bin_cppflags)
 xuez_wallet_CXXFLAGS = $(xuez_bin_cxxflags)
 xuez_wallet_LDFLAGS = $(xuez_bin_ldflags)
-xuez_wallet_LDADD = $(LIBBITCOIN_WALLET_TOOL) $(xuez_bin_ldadd)
+xuez_wallet_LDADD = $(LIBBITCOIN_WALLET_TOOL) $(xuez_wal_ldadd)
 
 if TARGET_WINDOWS
 xuez_wallet_SOURCES += xuez-wallet-res.rc

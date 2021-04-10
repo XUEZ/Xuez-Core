@@ -81,6 +81,47 @@ static bool ParseIncludeWatchonly(const UniValue& include_watchonly, const CWall
     return include_watchonly.get_bool();
 }
 
+double rpcGetNetworkStakeWeight()
+{
+	int nPoSInterval = 80;
+	double dStakeKernelsTriedAvg = 0;
+	int nStakesHandled = 0, nStakesTime = 0;
+	CBlockIndex* pindex = ::ChainActive().Tip();
+	CBlockIndex* pindexPrevStake = NULL;
+	while (pindex && nStakesHandled < nPoSInterval)
+	{
+		if (pindex->IsProofOfStake())
+		{
+			if (pindexPrevStake)
+			{
+				//dStakeKernelsTriedAvg += GetDifficulty(pindexPrevStake) * 4294967296.0;
+				int nShift = (pindexPrevStake->nBits >> 24) & 0xff;
+				double dDiff = (double)0x0000ffff / (double)(pindexPrevStake->nBits & 0x00ffffff);
+				while (nShift < 29)
+				{
+					dDiff *= 256.0;
+					nShift++;
+				}
+				while (nShift > 29)
+				{
+					dDiff /= 256.0;
+					nShift--;
+				}
+				dStakeKernelsTriedAvg += ( dDiff * 4294967296.0 );
+			
+				nStakesTime += pindexPrevStake->nTime - pindex->nTime;
+				nStakesHandled++;
+			}
+			pindexPrevStake = pindex;
+		}
+		pindex = pindex->pprev;
+	}
+	double result = 0;
+	if (nStakesTime)
+		result = dStakeKernelsTriedAvg / nStakesTime;
+	result *= 16;
+	return result;
+}
 
 /** Checks if a CKey is in the given CWallet compressed or otherwise*/
 bool HaveKey(const SigningProvider& wallet, const CKey& key)
@@ -957,7 +998,7 @@ static RPCHelpMan getstakingstatus()
 		if ( pwallet ){		
 			//LOCK(pwallet->cs_wallet); ** locks are handled in the called methods below
 			nWeight = pwallet->GetStakeWeight();
-			nNetworkWeight = pwallet->GetNetworkStakeWeight();
+			nNetworkWeight = rpcGetNetworkStakeWeight();
 			nExpectedTime = 1.0455 * 64 * nNetworkWeight / nWeight;
 		}
 		nStakingNow = ( ( nWeight + nNetworkWeight ) > 0 ) ? 1 : 0;

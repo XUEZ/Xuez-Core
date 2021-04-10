@@ -1501,7 +1501,6 @@ void XUEZGUI::setStakingStatus()
 
 	if ( nWeight > 0 && nStakingEnabled ) {
 	    int64_t nNetworkWeight = ( 1.1429 * GetPoSKernelPS() );
-	    wallet.get()->m_network_weight = nNetworkWeight;
     	unsigned nEstimateTime = 1.0455 * 64 * nNetworkWeight / nWeight;
 		
 		QString stakeTime;

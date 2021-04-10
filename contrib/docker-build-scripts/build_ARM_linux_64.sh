@@ -46,7 +46,7 @@ export GOAL=${GOAL:-install}
 export DIR_QA_ASSETS=${DIR_QA_ASSETS:-${BASE_SCRATCH_DIR}/qa-assets}
 export PATH=${BASE_ROOT_DIR}/ci/retry:$PATH
 export CI_RETRY_EXE=${CI_RETRY_EXE:-"retry --"}
-export BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports CXXFLAGS=-Wno-psabi --with-boost-process --enable-suppress-external-warnings --disable-dependency-tracking --disable-tests --disable-gui-tests --disable-bench"
+export BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports CXXFLAGS=-Wno-psabi --with-boost-process --enable-suppress-external-warnings --disable-dependency-tracking --disable-tests --disable-gui-tests --disable-bench --enable-c++17"
 
 # create the docker container
 

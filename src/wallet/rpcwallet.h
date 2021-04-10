@@ -39,4 +39,6 @@ LegacyScriptPubKeyMan& EnsureLegacyScriptPubKeyMan(CWallet& wallet, bool also_cr
 RPCHelpMan getaddressinfo();
 RPCHelpMan signrawtransactionwithwallet();
 
+double rpcGetNetworkStakeWeight();
+
 #endif //BITCOIN_WALLET_RPCWALLET_H

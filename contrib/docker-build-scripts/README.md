@@ -24,9 +24,7 @@ contrib/docker-build-scripts/build_Win_64.sh
 Use homebrew
 brew install qt automake cmake boost libevent
 
-./configure --disable-tests --disable-dependency-tracking --with-gui=qt5 --disable-bench --enable-reduce-exports --with-boost-process \
---with-boost=/usr/local/Cellar/boost/1.71.0 --with-boost-libdir=/usr/local/Cellar/boost/1.71.0/lib --enable-c++17 \
-CXXFLAGS="-pipe -O2 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk \
+./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking --enable-c++17 --with-gui=qt5 --with-boost=/usr/local/Cellar/boost/1.71.0 --with-boost-libdir=/usr/local/Cellar/boost/1.71.0/lib CXXFLAGS="-pipe -O2 -std=c++17 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk \
 -mmacosx-version-min=10.11 -Wno-unused-variable -Wno-unused-parameter -I/usr/local/Cellar/boost/1.71.0/include -I/usr/local/Cellar/libevent/2.1.12/include"
 
 make -j4 && make deploy
