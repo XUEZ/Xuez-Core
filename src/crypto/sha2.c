@@ -8,7 +8,6 @@
  * any later version.  See COPYING for more details.
  */
 
-#include <compat/byteswap.h>
 #include <string.h>
 #include <inttypes.h>
 
@@ -45,20 +44,26 @@ void sha256_init(uint32_t *state)
     memcpy(state, sha256_h, 32);
 }
 
-/* Necessary bit shifting functions */
-static inline uint32_t swab32(uint32_t v)
+#ifdef __linux__
+/* to quiet strict compiler warning */
+uint32_t swab32(uint32_t x);
+uint32_t be32dec(const void *pp);
+void be32enc(void *pp, uint32_t x);
+#else
+inline uint32_t swab32(uint32_t x)
 {
-    return bswap_32(v);
+    return (((x & 0xff000000U) >> 24) | ((x & 0x00ff0000U) >>  8) |
+            ((x & 0x0000ff00U) <<  8) | ((x & 0x000000ffU) << 24));
 }
 
-static inline uint32_t be32dec(const void *pp)
+inline uint32_t be32dec(const void *pp)
 {
     const uint8_t *p = (uint8_t const *)pp;
     return ((uint32_t)(p[3]) + ((uint32_t)(p[2]) << 8) +
         ((uint32_t)(p[1]) << 16) + ((uint32_t)(p[0]) << 24));
 }
 
-static inline void be32enc(void *pp, uint32_t x)
+inline void be32enc(void *pp, uint32_t x)
 {
     uint8_t *p = (uint8_t *)pp;
     p[3] = x & 0xff;
@@ -66,6 +71,7 @@ static inline void be32enc(void *pp, uint32_t x)
     p[1] = (x >> 16) & 0xff;
     p[0] = (x >> 24) & 0xff;
 }
+#endif
 
 /* Elementary functions used by SHA256 */
 #define Ch(x, y, z)     ((x & (y ^ z)) ^ z)

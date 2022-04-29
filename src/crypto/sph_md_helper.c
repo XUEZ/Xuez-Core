@@ -76,6 +76,10 @@
  * @author   Thomas Pornin <thomas.pornin@cryptolog.com>
  */
 
+//#ifdef HASH
+
+#include <stddef.h>
+
 //#ifndef MAC_OSX
 //#pragma GCC diagnostic ignored "-fpermissive"
 //#endif
@@ -84,10 +88,10 @@
 #pragma warning (disable: 4146)
 #endif
 
-#undef SPH_XCAT
-#define SPH_XCAT(a, b)     SPH_XCAT_(a, b)
 #undef SPH_XCAT_
 #define SPH_XCAT_(a, b)    a ## b
+#undef SPH_XCAT
+#define SPH_XCAT(a, b)     SPH_XCAT_(a, b)
 
 #undef SPH_BLEN
 #undef SPH_WLEN
@@ -354,3 +358,5 @@ SPH_XCAT(HASH, _close)(void *cc, void *dst, unsigned rnum)
 {
     SPH_XCAT(HASH, _addbits_and_close)(cc, 0, 0, dst, rnum);
 }
+
+//#endif

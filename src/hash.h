@@ -12,6 +12,7 @@
 #include <crypto/ripemd160.h>
 #include <crypto/sha1.h>
 #include <crypto/sha256.h>
+//#include <crypto/sha512.h>
 #include <prevector.h>
 #include <serialize.h>
 #include <uint256.h>
@@ -146,7 +147,7 @@ inline uint160 Hash160(const T1& in1)
 template<typename T1>
 inline uint256 Hash1(const T1& in1)
 {
-    static const arith_uint256 TRAILING_BITS = arith_uint256("0000000000000000000000000000000000000000ffffffffffffffffffffffff");
+    static const arith_uint256 TRAILING_BITS("0000000000000000000000000000000000000000ffffffffffffffffffffffff");
     uint160 result;
     CHash1().Write(MakeUCharSpan(in1)).Finalize(result);
     //const Span<const unsigned char> &input = MakeUCharSpan(in1);
@@ -280,78 +281,80 @@ inline uint256 HashQuark(const T1& in1)
     sph_keccak512_context     ctx_keccak;
     sph_skein512_context      ctx_skein;
 
-    static const arith_uint512 MASK = arith_uint512(8);
-    static const arith_uint512 ZERO = arith_uint512(0);
+    constexpr unsigned int inputHashLength = 64;
 
     const Span<const unsigned char> &input = MakeUCharSpan(in1);
-    arith_uint512 hash[9];
+    unsigned char hashA[inputHashLength], hashB[inputHashLength];
 
     sph_blake512_init(&ctx_blake);
     // ZBLAKE;
     sph_blake512(&ctx_blake, input.data(), input.size());
-    sph_blake512_close(&ctx_blake, static_cast<void*>(&hash[0]));
+    sph_blake512_close(&ctx_blake, static_cast<void*>(hashA));
 
     sph_bmw512_init(&ctx_bmw);
     // ZBMW;
-    sph_bmw512(&ctx_bmw, static_cast<const void*>(&hash[0]), 64);
-    sph_bmw512_close(&ctx_bmw, static_cast<void*>(&hash[1]));
+    sph_bmw512(&ctx_bmw, static_cast<const void*>(hashA), inputHashLength);
+    sph_bmw512_close(&ctx_bmw, static_cast<void*>(hashB));
 
-    if ((hash[1] & MASK) != ZERO) {
+    if (hashB[0] & 0x8) {
         sph_groestl512_init(&ctx_groestl);
         // ZGROESTL;
-        sph_groestl512(&ctx_groestl, static_cast<const void*>(&hash[1]), 64);
-        sph_groestl512_close(&ctx_groestl, static_cast<void*>(&hash[2]));
+        sph_groestl512(&ctx_groestl, static_cast<const void*>(hashB), inputHashLength);
+        sph_groestl512_close(&ctx_groestl, static_cast<void*>(hashA));
     } else {
         sph_skein512_init(&ctx_skein);
         // ZSKEIN;
-        sph_skein512(&ctx_skein, static_cast<const void*>(&hash[1]), 64);
-        sph_skein512_close(&ctx_skein, static_cast<void*>(&hash[2]));
+        sph_skein512(&ctx_skein, static_cast<const void*>(hashB), inputHashLength);
+        sph_skein512_close(&ctx_skein, static_cast<void*>(hashA));
     }
 
     sph_groestl512_init(&ctx_groestl);
     // ZGROESTL;
-    sph_groestl512(&ctx_groestl, static_cast<const void*>(&hash[2]), 64);
-    sph_groestl512_close(&ctx_groestl, static_cast<void*>(&hash[3]));
+    sph_groestl512(&ctx_groestl, static_cast<const void*>(hashA), inputHashLength);
+    sph_groestl512_close(&ctx_groestl, static_cast<void*>(hashB));
 
     sph_jh512_init(&ctx_jh);
     // ZJH;
-    sph_jh512(&ctx_jh, static_cast<const void*>(&hash[3]), 64);
-    sph_jh512_close(&ctx_jh, static_cast<void*>(&hash[4]));
+    sph_jh512(&ctx_jh, static_cast<const void*>(hashB), inputHashLength);
+    sph_jh512_close(&ctx_jh, static_cast<void*>(hashA));
 
-    if ((hash[4] & MASK) != ZERO) {
+    if (hashA[0] & 0x8) {
         sph_blake512_init(&ctx_blake);
         // ZBLAKE;
-        sph_blake512(&ctx_blake, static_cast<const void*>(&hash[4]), 64);
-        sph_blake512_close(&ctx_blake, static_cast<void*>(&hash[5]));
+        sph_blake512(&ctx_blake, static_cast<const void*>(hashA), inputHashLength);
+        sph_blake512_close(&ctx_blake, static_cast<void*>(hashB));
     } else {
         sph_bmw512_init(&ctx_bmw);
         // ZBMW;
-        sph_bmw512(&ctx_bmw, static_cast<const void*>(&hash[4]), 64);
-        sph_bmw512_close(&ctx_bmw, static_cast<void*>(&hash[5]));
+        sph_bmw512(&ctx_bmw, static_cast<const void*>(hashA), inputHashLength);
+        sph_bmw512_close(&ctx_bmw, static_cast<void*>(hashB));
     }
 
     sph_keccak512_init(&ctx_keccak);
     // ZKECCAK;
-    sph_keccak512(&ctx_keccak, static_cast<const void*>(&hash[5]), 64);
-    sph_keccak512_close(&ctx_keccak, static_cast<void*>(&hash[6]));
+    sph_keccak512(&ctx_keccak, static_cast<const void*>(hashB), inputHashLength);
+    sph_keccak512_close(&ctx_keccak, static_cast<void*>(hashA));
 
     sph_skein512_init(&ctx_skein);
     // SKEIN;
-    sph_skein512(&ctx_skein, static_cast<const void*>(&hash[6]), 64);
-    sph_skein512_close(&ctx_skein, static_cast<void*>(&hash[7]));
+    sph_skein512(&ctx_skein, static_cast<const void*>(hashA), inputHashLength);
+    sph_skein512_close(&ctx_skein, static_cast<void*>(hashB));
 
-    if ((hash[7] & MASK) != ZERO) {
+    if (hashB[0] & 0x8) {
         sph_keccak512_init(&ctx_keccak);
         // ZKECCAK;
-        sph_keccak512(&ctx_keccak, static_cast<const void*>(&hash[7]), 64);
-        sph_keccak512_close(&ctx_keccak, static_cast<void*>(&hash[8]));
+        sph_keccak512(&ctx_keccak, static_cast<const void*>(hashB), inputHashLength);
+        sph_keccak512_close(&ctx_keccak, static_cast<void*>(hashA));
     } else {
         sph_jh512_init(&ctx_jh);
         // ZJH;
-        sph_jh512(&ctx_jh, static_cast<const void*>(&hash[7]), 64);
-        sph_jh512_close(&ctx_jh, static_cast<void*>(&hash[8]));
+        sph_jh512(&ctx_jh, static_cast<const void*>(hashB), inputHashLength);
+        sph_jh512_close(&ctx_jh, static_cast<void*>(hashA));
     }
-    return ArithToUint256(hash[8].trim256());
+
+    uint256 result;
+    memcpy(result.data(), hashA, 32);
+    return result;
 }
 
 /* ----------- Xevan Hash ------------------------------------------------- */
@@ -376,149 +379,156 @@ inline uint256 HashXevan(const T1& in1)
     sph_sha512_context        ctx_sha2;
     sph_haval256_5_context    ctx_haval;
 
-    const unsigned int worknumber = 128;
+    constexpr unsigned int inputHashLength = 128; // Note this causes 64 bytes of zeroed memory to be read beyond the hash
 
     const Span<const unsigned char> &input = MakeUCharSpan(in1);
-    arith_uint512 hash[34];
+    unsigned char hashA[inputHashLength], hashB[inputHashLength];
+    memset(&hashA[64], '\0', inputHashLength - 64); // Write zeroes to the bytes which are not overwritten by the hash output
+    memset(&hashB[64], '\0', inputHashLength - 64);
 
     sph_blake512_init(&ctx_blake);
     sph_blake512(&ctx_blake, input.data(), input.size());
-    sph_blake512_close(&ctx_blake, static_cast<void*>(&hash[0]));
+    sph_blake512_close(&ctx_blake, static_cast<void*>(hashA));
 
     sph_bmw512_init(&ctx_bmw);
-    sph_bmw512(&ctx_bmw, static_cast<const void*>(&hash[0]), worknumber);
-    sph_bmw512_close(&ctx_bmw, static_cast<void*>(&hash[1]));
+    sph_bmw512(&ctx_bmw, static_cast<const void*>(hashA), inputHashLength);
+    sph_bmw512_close(&ctx_bmw, static_cast<void*>(hashB));
 
     sph_groestl512_init(&ctx_groestl);
-    sph_groestl512(&ctx_groestl, static_cast<const void*>(&hash[1]), worknumber);
-    sph_groestl512_close(&ctx_groestl, static_cast<void*>(&hash[2]));
+    sph_groestl512(&ctx_groestl, static_cast<const void*>(hashB), inputHashLength);
+    sph_groestl512_close(&ctx_groestl, static_cast<void*>(hashA));
 
     sph_skein512_init(&ctx_skein);
-    sph_skein512(&ctx_skein, static_cast<const void*>(&hash[2]), worknumber);
-    sph_skein512_close(&ctx_skein, static_cast<void*>(&hash[3]));
+    sph_skein512(&ctx_skein, static_cast<const void*>(hashA), inputHashLength);
+    sph_skein512_close(&ctx_skein, static_cast<void*>(hashB));
 
     sph_jh512_init(&ctx_jh);
-    sph_jh512(&ctx_jh, static_cast<const void*>(&hash[3]), worknumber);
-    sph_jh512_close(&ctx_jh, static_cast<void*>(&hash[4]));
+    sph_jh512(&ctx_jh, static_cast<const void*>(hashB), inputHashLength);
+    sph_jh512_close(&ctx_jh, static_cast<void*>(hashA));
 
     sph_keccak512_init(&ctx_keccak);
-    sph_keccak512(&ctx_keccak, static_cast<const void*>(&hash[4]), worknumber);
-    sph_keccak512_close(&ctx_keccak, static_cast<void*>(&hash[5]));
+    sph_keccak512(&ctx_keccak, static_cast<const void*>(hashA), inputHashLength);
+    sph_keccak512_close(&ctx_keccak, static_cast<void*>(hashB));
 
     sph_luffa512_init(&ctx_luffa);
-    sph_luffa512(&ctx_luffa, static_cast<void*>(&hash[5]), worknumber);
-    sph_luffa512_close(&ctx_luffa, static_cast<void*>(&hash[6]));
+    sph_luffa512(&ctx_luffa, static_cast<void*>(hashB), inputHashLength);
+    sph_luffa512_close(&ctx_luffa, static_cast<void*>(hashA));
 
     sph_cubehash512_init(&ctx_cubehash);
-    sph_cubehash512(&ctx_cubehash, static_cast<const void*>(&hash[6]), worknumber);
-    sph_cubehash512_close(&ctx_cubehash, static_cast<void*>(&hash[7]));
+    sph_cubehash512(&ctx_cubehash, static_cast<const void*>(hashA), inputHashLength);
+    sph_cubehash512_close(&ctx_cubehash, static_cast<void*>(hashB));
 
     sph_shavite512_init(&ctx_shavite);
-    sph_shavite512(&ctx_shavite, static_cast<const void*>(&hash[7]), worknumber);
-    sph_shavite512_close(&ctx_shavite, static_cast<void*>(&hash[8]));
+    sph_shavite512(&ctx_shavite, static_cast<const void*>(hashB), inputHashLength);
+    sph_shavite512_close(&ctx_shavite, static_cast<void*>(hashA));
 
     sph_simd512_init(&ctx_simd);
-    sph_simd512(&ctx_simd, static_cast<const void*>(&hash[8]), worknumber);
-    sph_simd512_close(&ctx_simd, static_cast<void*>(&hash[9]));
+    sph_simd512(&ctx_simd, static_cast<const void*>(hashA), inputHashLength);
+    sph_simd512_close(&ctx_simd, static_cast<void*>(hashB));
 
     sph_echo512_init(&ctx_echo);
-    sph_echo512(&ctx_echo, static_cast<const void*>(&hash[9]), worknumber);
-    sph_echo512_close(&ctx_echo, static_cast<void*>(&hash[10]));
+    sph_echo512(&ctx_echo, static_cast<const void*>(hashB), inputHashLength);
+    sph_echo512_close(&ctx_echo, static_cast<void*>(hashA));
 
     sph_hamsi512_init(&ctx_hamsi);
-    sph_hamsi512(&ctx_hamsi, static_cast<const void*>(&hash[10]), worknumber);
-    sph_hamsi512_close(&ctx_hamsi, static_cast<void*>(&hash[11]));
+    sph_hamsi512(&ctx_hamsi, static_cast<const void*>(hashA), inputHashLength);
+    sph_hamsi512_close(&ctx_hamsi, static_cast<void*>(hashB));
 
     sph_fugue512_init(&ctx_fugue);
-    sph_fugue512(&ctx_fugue, static_cast<const void*>(&hash[11]), worknumber);
-    sph_fugue512_close(&ctx_fugue, static_cast<void*>(&hash[12]));
+    sph_fugue512(&ctx_fugue, static_cast<const void*>(hashB), inputHashLength);
+    sph_fugue512_close(&ctx_fugue, static_cast<void*>(hashA));
 
     sph_shabal512_init(&ctx_shabal);
-    sph_shabal512(&ctx_shabal, static_cast<const void*>(&hash[12]), worknumber);
-    sph_shabal512_close(&ctx_shabal, static_cast<void*>(&hash[13]));
+    sph_shabal512(&ctx_shabal, static_cast<const void*>(hashA), inputHashLength);
+    sph_shabal512_close(&ctx_shabal, static_cast<void*>(hashB));
 
     sph_whirlpool_init(&ctx_whirlpool);
-    sph_whirlpool(&ctx_whirlpool, static_cast<const void*>(&hash[13]), worknumber);
-    sph_whirlpool_close(&ctx_whirlpool, static_cast<void*>(&hash[14]));
+    sph_whirlpool(&ctx_whirlpool, static_cast<const void*>(hashB), inputHashLength);
+    sph_whirlpool_close(&ctx_whirlpool, static_cast<void*>(hashA));
 
     sph_sha512_init(&ctx_sha2);
-    sph_sha512(&ctx_sha2, static_cast<const void*>(&hash[14]), worknumber);
-    sph_sha512_close(&ctx_sha2, static_cast<void*>(&hash[15]));
+    sph_sha512(&ctx_sha2, static_cast<const void*>(hashA), inputHashLength);
+    sph_sha512_close(&ctx_sha2, static_cast<void*>(hashB));
+    //CSHA512().Write(reinterpret_cast<const unsigned char*>(hashA), inputHashLength).Finalize(reinterpret_cast<unsigned char*>(hashB));
 
     sph_haval256_5_init(&ctx_haval);
-    sph_haval256_5(&ctx_haval, static_cast<const void*>(&hash[15]), worknumber);
-    sph_haval256_5_close(&ctx_haval, static_cast<void*>(&hash[16]));
+    sph_haval256_5(&ctx_haval, static_cast<const void*>(hashB), inputHashLength);
+    sph_haval256_5_close(&ctx_haval, static_cast<void*>(hashA));
+    memset(&hashA[32], '\0', 32); // Write zeroes to the other 256 bits which were not already overwritten
 
     // Part 2
     sph_blake512_init(&ctx_blake);
-    sph_blake512(&ctx_blake, static_cast<const void*>(&hash[16]), worknumber);
-    sph_blake512_close(&ctx_blake, static_cast<void*>(&hash[17]));
+    sph_blake512(&ctx_blake, static_cast<const void*>(hashA), inputHashLength);
+    sph_blake512_close(&ctx_blake, static_cast<void*>(hashB));
 
     sph_bmw512_init(&ctx_bmw);
-    sph_bmw512(&ctx_bmw, static_cast<const void*>(&hash[17]), worknumber);
-    sph_bmw512_close(&ctx_bmw, static_cast<void*>(&hash[18]));
+    sph_bmw512(&ctx_bmw, static_cast<const void*>(hashB), inputHashLength);
+    sph_bmw512_close(&ctx_bmw, static_cast<void*>(hashA));
 
     sph_groestl512_init(&ctx_groestl);
-    sph_groestl512(&ctx_groestl, static_cast<const void*>(&hash[18]), worknumber);
-    sph_groestl512_close(&ctx_groestl, static_cast<void*>(&hash[19]));
+    sph_groestl512(&ctx_groestl, static_cast<const void*>(hashA), inputHashLength);
+    sph_groestl512_close(&ctx_groestl, static_cast<void*>(hashB));
 
     sph_skein512_init(&ctx_skein);
-    sph_skein512(&ctx_skein, static_cast<const void*>(&hash[19]), worknumber);
-    sph_skein512_close(&ctx_skein, static_cast<void*>(&hash[20]));
+    sph_skein512(&ctx_skein, static_cast<const void*>(hashB), inputHashLength);
+    sph_skein512_close(&ctx_skein, static_cast<void*>(hashA));
 
     sph_jh512_init(&ctx_jh);
-    sph_jh512(&ctx_jh, static_cast<const void*>(&hash[20]), worknumber);
-    sph_jh512_close(&ctx_jh, static_cast<void*>(&hash[21]));
+    sph_jh512(&ctx_jh, static_cast<const void*>(hashA), inputHashLength);
+    sph_jh512_close(&ctx_jh, static_cast<void*>(hashB));
 
     sph_keccak512_init(&ctx_keccak);
-    sph_keccak512(&ctx_keccak, static_cast<const void*>(&hash[21]), worknumber);
-    sph_keccak512_close(&ctx_keccak, static_cast<void*>(&hash[22]));
+    sph_keccak512(&ctx_keccak, static_cast<const void*>(hashB), inputHashLength);
+    sph_keccak512_close(&ctx_keccak, static_cast<void*>(hashA));
 
     sph_luffa512_init(&ctx_luffa);
-    sph_luffa512(&ctx_luffa, static_cast<void*>(&hash[22]), worknumber);
-    sph_luffa512_close(&ctx_luffa, static_cast<void*>(&hash[23]));
+    sph_luffa512(&ctx_luffa, static_cast<void*>(hashA), inputHashLength);
+    sph_luffa512_close(&ctx_luffa, static_cast<void*>(hashB));
 
     sph_cubehash512_init(&ctx_cubehash);
-    sph_cubehash512(&ctx_cubehash, static_cast<const void*>(&hash[23]), worknumber);
-    sph_cubehash512_close(&ctx_cubehash, static_cast<void*>(&hash[24]));
+    sph_cubehash512(&ctx_cubehash, static_cast<const void*>(hashB), inputHashLength);
+    sph_cubehash512_close(&ctx_cubehash, static_cast<void*>(hashA));
 
     sph_shavite512_init(&ctx_shavite);
-    sph_shavite512(&ctx_shavite, static_cast<const void*>(&hash[24]), worknumber);
-    sph_shavite512_close(&ctx_shavite, static_cast<void*>(&hash[25]));
+    sph_shavite512(&ctx_shavite, static_cast<const void*>(hashA), inputHashLength);
+    sph_shavite512_close(&ctx_shavite, static_cast<void*>(hashB));
 
     sph_simd512_init(&ctx_simd);
-    sph_simd512(&ctx_simd, static_cast<const void*>(&hash[25]), worknumber);
-    sph_simd512_close(&ctx_simd, static_cast<void*>(&hash[26]));
+    sph_simd512(&ctx_simd, static_cast<const void*>(hashB), inputHashLength);
+    sph_simd512_close(&ctx_simd, static_cast<void*>(hashA));
 
     sph_echo512_init(&ctx_echo);
-    sph_echo512(&ctx_echo, static_cast<const void*>(&hash[26]), worknumber);
-    sph_echo512_close(&ctx_echo, static_cast<void*>(&hash[27]));
+    sph_echo512(&ctx_echo, static_cast<const void*>(hashA), inputHashLength);
+    sph_echo512_close(&ctx_echo, static_cast<void*>(hashB));
 
     sph_hamsi512_init(&ctx_hamsi);
-    sph_hamsi512(&ctx_hamsi, static_cast<const void*>(&hash[27]), worknumber);
-    sph_hamsi512_close(&ctx_hamsi, static_cast<void*>(&hash[28]));
+    sph_hamsi512(&ctx_hamsi, static_cast<const void*>(hashB), inputHashLength);
+    sph_hamsi512_close(&ctx_hamsi, static_cast<void*>(hashA));
 
     sph_fugue512_init(&ctx_fugue);
-    sph_fugue512(&ctx_fugue, static_cast<const void*>(&hash[28]), worknumber);
-    sph_fugue512_close(&ctx_fugue, static_cast<void*>(&hash[29]));
+    sph_fugue512(&ctx_fugue, static_cast<const void*>(hashA), inputHashLength);
+    sph_fugue512_close(&ctx_fugue, static_cast<void*>(hashB));
 
     sph_shabal512_init(&ctx_shabal);
-    sph_shabal512(&ctx_shabal, static_cast<const void*>(&hash[29]), worknumber);
-    sph_shabal512_close(&ctx_shabal, static_cast<void*>(&hash[30]));
+    sph_shabal512(&ctx_shabal, static_cast<const void*>(hashB), inputHashLength);
+    sph_shabal512_close(&ctx_shabal, static_cast<void*>(hashA));
 
     sph_whirlpool_init(&ctx_whirlpool);
-    sph_whirlpool(&ctx_whirlpool, static_cast<const void*>(&hash[30]), worknumber);
-    sph_whirlpool_close(&ctx_whirlpool, static_cast<void*>(&hash[31]));
+    sph_whirlpool(&ctx_whirlpool, static_cast<const void*>(hashA), inputHashLength);
+    sph_whirlpool_close(&ctx_whirlpool, static_cast<void*>(hashB));
 
     sph_sha512_init(&ctx_sha2);
-    sph_sha512(&ctx_sha2, static_cast<const void*>(&hash[31]), worknumber);
-    sph_sha512_close(&ctx_sha2, static_cast<void*>(&hash[32]));
+    sph_sha512(&ctx_sha2, static_cast<const void*>(hashB), inputHashLength);
+    sph_sha512_close(&ctx_sha2, static_cast<void*>(hashA));
+    //CSHA512().Write(reinterpret_cast<const unsigned char*>(hashB), inputHashLength).Finalize(reinterpret_cast<unsigned char*>(hashA));
 
     sph_haval256_5_init(&ctx_haval);
-    sph_haval256_5(&ctx_haval, static_cast<const void*>(&hash[32]), worknumber);
-    sph_haval256_5_close(&ctx_haval, static_cast<void*>(&hash[33]));
+    sph_haval256_5(&ctx_haval, static_cast<const void*>(hashA), inputHashLength);
+    sph_haval256_5_close(&ctx_haval, static_cast<void*>(hashB));
 
-    return ArithToUint256(hash[33].trim256());
+    uint256 result;
+    memcpy(result.data(), hashB, 32);
+    return result;
 }
 
 /* ----------- Nist5 Hash ------------------------------------------------- */
@@ -531,35 +541,39 @@ inline uint256 HashNist5(const T1& in1)
     sph_keccak512_context     ctx_keccak;
     sph_skein512_context      ctx_skein;
 
+    constexpr unsigned int inputHashLength = 64;
+
     const Span<const unsigned char> &input = MakeUCharSpan(in1);
-    arith_uint512 hash[5];
+    unsigned char hashA[inputHashLength], hashB[inputHashLength];
 
     sph_blake512_init(&ctx_blake);
     // ZBLAKE;
     sph_blake512(&ctx_blake, input.data(), input.size());
-    sph_blake512_close(&ctx_blake, static_cast<void*>(&hash[0]));
+    sph_blake512_close(&ctx_blake, static_cast<void*>(hashA));
 
     sph_groestl512_init(&ctx_groestl);
     // ZGROESTL;
-    sph_groestl512(&ctx_groestl, static_cast<const void*>(&hash[0]), 64);
-    sph_groestl512_close(&ctx_groestl, static_cast<void*>(&hash[1]));
+    sph_groestl512(&ctx_groestl, static_cast<const void*>(hashA), inputHashLength);
+    sph_groestl512_close(&ctx_groestl, static_cast<void*>(hashB));
 
     sph_jh512_init(&ctx_jh);
     // ZJH;
-    sph_jh512(&ctx_jh, static_cast<const void*>(&hash[1]), 64);
-    sph_jh512_close(&ctx_jh, static_cast<void*>(&hash[2]));
+    sph_jh512(&ctx_jh, static_cast<const void*>(hashB), inputHashLength);
+    sph_jh512_close(&ctx_jh, static_cast<void*>(hashA));
 
     sph_keccak512_init(&ctx_keccak);
     // ZKECCAK;
-    sph_keccak512(&ctx_keccak, static_cast<const void*>(&hash[2]), 64);
-    sph_keccak512_close(&ctx_keccak, static_cast<void*>(&hash[3]));
+    sph_keccak512(&ctx_keccak, static_cast<const void*>(hashA), inputHashLength);
+    sph_keccak512_close(&ctx_keccak, static_cast<void*>(hashB));
 
     sph_skein512_init(&ctx_skein);
     // SKEIN;
-    sph_skein512(&ctx_skein, static_cast<const void*>(&hash[3]), 64);
-    sph_skein512_close(&ctx_skein, static_cast<void*>(&hash[4]));
+    sph_skein512(&ctx_skein, static_cast<const void*>(hashB), inputHashLength);
+    sph_skein512_close(&ctx_skein, static_cast<void*>(hashA));
 
-    return ArithToUint256(hash[4].trim256());
+    uint256 result;
+    memcpy(result.data(), hashA, 32);
+    return result;
 }
 
 #endif // BITCOIN_HASH_H

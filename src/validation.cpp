@@ -3780,13 +3780,13 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
 
     // Check proof of work
     const Consensus::Params& consensusParams = params.GetConsensus();
-    const unsigned int nRequiredBits = GetNextWorkRequired(pindexPrev, &block, consensusParams);
+    const uint32_t nRequiredBits = GetNextWorkRequired(pindexPrev, &block, consensusParams);
     //LogPrintf("%s: block %i - bnTarget = %s, expected bnTarget = %s\n", __func__, nHeight, arith_uint256().SetCompact(block.nBits).ToString(), arith_uint256().SetCompact(nRequiredBits).ToString());
     if (block.nBits != nRequiredBits)
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "bad-diffbits", "incorrect difficulty target");
 
     // Reject new PoW algorithms until they have been activated
-    if (nHeight >= 1 && CBlockHeader::GetAlgo(block.nVersion) > CBlockHeader::ALGO_POW_XEVAN)
+    if (nHeight < 1 && CBlockHeader::GetAlgo(block.nVersion) > CBlockHeader::ALGO_POW_XEVAN)
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "new-algo", "block using new algo before activation");
 
     // Check against checkpoints
@@ -3810,7 +3810,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, BlockValidatio
         return state.Invalid(BlockValidationResult::BLOCK_INVALID_HEADER, "invalid-time-mask", "block timestamp mask not valid");
 
     // Check timestamp
-    const unsigned int nFutureTimeLimit = block.nVersion >= CBlockHeader::FIRST_FORK_VERSION ? MAX_FUTURE_BLOCK_TIME : 180;
+    const uint32_t nFutureTimeLimit = block.nVersion >= CBlockHeader::FIRST_FORK_VERSION ? MAX_FUTURE_BLOCK_TIME : 180;
     if (block.GetBlockTime() > nAdjustedTime + nFutureTimeLimit && Params().NetworkIDString() != CBaseChainParams::REGTEST)
         return state.Invalid(BlockValidationResult::BLOCK_TIME_FUTURE, "time-too-new", "block timestamp too far in the future");
 
