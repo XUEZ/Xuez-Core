@@ -2,7 +2,7 @@ package=boost
 $(package)_version=1_71_0_rc1
 $(package)_download_path=https://boostorg.jfrog.io/artifactory/main/release/$(subst _,.,$($(package)_version))/source/
 $(package)_file_name=boost_$($(package)_version).tar.bz2
-$(package)_sha256_hash=07c07cad079fed3f0175cbd7097740a333c2cdc6c899ac433dea87d1224d726d
+$(package)_sha256_hash=c857a86fb1223c7a256414151e2d1dcd4691b56197aa1329e087e92502191434
 $(package)_dependencies=native_b2
 
 define $(package)_set_vars
