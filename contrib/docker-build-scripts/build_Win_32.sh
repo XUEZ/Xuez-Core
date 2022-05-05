@@ -86,8 +86,10 @@ DOCKER_EXEC () {
 export -f DOCKER_EXEC
 
 COPYBINS () {
-  docker cp $CONTAINER_NAME:$BASE_ROOT_DIR/xuez-$VER-win64-setup.exe xuez-v$VER-win32-setup.exe
-  DOCKER_EXEC rm -rf \$\(ls $BASE_ROOT_DIR/*setup*exe\)
+  DOCKER_EXEC mkdir -p /xueztmp
+  DOCKER_EXEC cp $BASE_ROOT_DIR/xuez*setup.exe /xueztmp/
+  docker cp $CONTAINER_NAME:/xueztmp/. .
+  DOCKER_EXEC rm -rf \$\(ls $BASE_ROOT_DIR/*setup*exe\) /xueztemp
 }
 
 DOCKER_EXEC echo "Free disk space:"
