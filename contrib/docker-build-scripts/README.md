@@ -21,12 +21,12 @@ Build scripts are:<br>
 
 ## macOS build
 Use homebrew, and BigSur<br>
-`brew install libtool automake cmake boost libevent librsvg qt@5`<br>
+`brew install libtool automake cmake boost libevent librsvg berkeley-db@4 qt@5`<br>
 **boost version is 1.78.0 at the time this doc was created**
 
 build for x64 on BigSur -<br>
-`./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking --enable-c++17 \
---with-gui=qt5 --with-boost=/usr/local/Cellar/boost/1.78.0_1 --with-boost-libdir=/usr/local/Cellar/boost/1.78.0_1/lib \
+`./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking \
+--enable-c++17 --with-gui=qt5 --with-boost=/usr/local/Cellar/boost/1.78.0_1 --with-boost-libdir=/usr/local/Cellar/boost/1.78.0_1/lib \
 CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-command-line-argument -I/usr/local/Cellar/boost/1.78.0_1include -I/usr/local/Cellar/libevent/2.1.12/include"`
 
 `make -j4 && make deploy`
@@ -36,8 +36,8 @@ CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-u
 
 for macOS ARM/M1 Build on Monterey -<br>
 
-`./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking --enable-c++17 --with-gui=qt5 \
---with-boost=/opt/homebrew/Cellar/boost/1.78.0_1 --with-boost-libdir=/opt/homebrew/Cellar/boost/1.78.0_1/lib \
+`./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking \
+--enable-c++17 --with-gui=qt5 --with-boost=/opt/homebrew/Cellar/boost/1.78.0_1 --with-boost-libdir=/opt/homebrew/Cellar/boost/1.78.0_1/lib \
 CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-command-line-argument -I/opt/homebrew/Cellar/boost/1.78.0_1/include -I/opt/homebrew/Cellar/libevent/2.1.12/include"`
 
 `make -j4 && make deploy`
