@@ -20,25 +20,25 @@ Build scripts are:<br>
 `contrib/docker-build-scripts/build_Win_64.sh`<br>
 
 ## macOS build
-Use homebrew, and BigSur
-**boost version is 1.78.0 at the time this doc was created**<br>
-brew install libtool automake cmake boost libevent librsvg qt@5
+Use homebrew, and BigSur<br>
+brew install libtool automake cmake boost libevent librsvg qt@5<br>
+**boost version is 1.78.0 at the time this doc was created**
 
-build for x64 on BigSur -
-./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking --enable-c++17 \<br>
---with-gui=qt5 --with-boost=/usr/local/Cellar/boost/1.78.0_1 --with-boost-libdir=/usr/local/Cellar/boost/1.78.0_1/lib \<br>
-CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-command-line-argument -I/usr/local/Cellar/boost/1.78.0_1include -I/usr/local/Cellar/libevent/2.1.12/include"
+build for x64 on BigSur -<br>
+`./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking --enable-c++17 \
+--with-gui=qt5 --with-boost=/usr/local/Cellar/boost/1.78.0_1 --with-boost-libdir=/usr/local/Cellar/boost/1.78.0_1/lib \
+CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-command-line-argument -I/usr/local/Cellar/boost/1.78.0_1include -I/usr/local/Cellar/libevent/2.1.12/include"`
 
 `make -j4 && make deploy`
 
-mv src/xuezd src/xuez-cli src/xuez-wallet src/xuez-tx . && strip xuezd xuez-cli xuez-wallet xuez-tx
-tar czf xuez-v$VERSION-macOS-cli.tgz xuezd xuez-cli xuez-wallet xuez-tx && rm xuezd xuez-cli xuez-wallet xuez-tx
+`mv src/xuezd src/xuez-cli src/xuez-wallet src/xuez-tx . && strip xuezd xuez-cli xuez-wallet xuez-tx`
+`tar czf xuez-v$VERSION-macOS-cli.tgz xuezd xuez-cli xuez-wallet xuez-tx && rm xuezd xuez-cli xuez-wallet xuez-tx`
 
-for macOS ARM/M1 Build on Monterey -
+for macOS ARM/M1 Build on Monterey -<br>
 
-./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking --enable-c++17 --with-gui=qt5 \<br>
---with-boost=/opt/homebrew/Cellar/boost/1.78.0_1 --with-boost-libdir=/opt/homebrew/Cellar/boost/1.78.0_1/lib \<br>
-CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-command-line-argument -I/opt/homebrew/Cellar/boost/1.78.0_1/include -I/opt/homebrew/Cellar/libevent/2.1.12/include"
+`./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking --enable-c++17 --with-gui=qt5 \
+--with-boost=/opt/homebrew/Cellar/boost/1.78.0_1 --with-boost-libdir=/opt/homebrew/Cellar/boost/1.78.0_1/lib \
+CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-command-line-argument -I/opt/homebrew/Cellar/boost/1.78.0_1/include -I/opt/homebrew/Cellar/libevent/2.1.12/include"`
 
 `make -j4 && make deploy`
 
