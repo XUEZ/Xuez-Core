@@ -8,16 +8,16 @@ sudo su $(who)
 git clone https://github.com/xuez/Xuez-Core.git && cd Xuez-Core
 
 Build scripts are:
-**bash contrib/docker-build-scripts/build_linux_64.sh** will build the Linux x64 version
-contrib/docker-build-scripts/build_apk_32.sh
-contrib/docker-build-scripts/build_apk_64.sh
-contrib/docker-build-scripts/build_apk_64x86.sh
-contrib/docker-build-scripts/build_ARM_linux_32.sh
-contrib/docker-build-scripts/buildARMlinux_32.sh
-contrib/docker-build-scripts/build_ARM_linux_64.sh
-contrib/docker-build-scripts/build_linux_64.sh
-contrib/docker-build-scripts/build_Win_32.sh
-contrib/docker-build-scripts/build_Win_64.sh
+`bash contrib/docker-build-scripts/build_linux_64.sh` will build the Linux x64 version
+> contrib/docker-build-scripts/build_apk_32.sh
+> contrib/docker-build-scripts/build_apk_64.sh
+> contrib/docker-build-scripts/build_apk_64x86.sh
+> contrib/docker-build-scripts/build_ARM_linux_32.sh
+> contrib/docker-build-scripts/buildARMlinux_32.sh
+> contrib/docker-build-scripts/build_ARM_linux_64.sh
+> contrib/docker-build-scripts/build_linux_64.sh
+> contrib/docker-build-scripts/build_Win_32.sh
+> contrib/docker-build-scripts/build_Win_64.sh
 
 
 ## macOS build
