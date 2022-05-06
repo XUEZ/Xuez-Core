@@ -16,12 +16,12 @@ Build scripts are:<br>
 `contrib/docker-build-scripts/buildARMlinux_32.sh`<br>
 `contrib/docker-build-scripts/build_ARM_linux_64.sh`<br>
 `contrib/docker-build-scripts/build_linux_64.sh`<br>
-`contrib/docker-build-scripts/build_Win_32.shv
+`contrib/docker-build-scripts/build_Win_32.sh`<br>
 `contrib/docker-build-scripts/build_Win_64.sh`<br>
 
 ## macOS build
 Use homebrew, and BigSur<br>
-brew install libtool automake cmake boost libevent librsvg qt@5<br>
+`brew install libtool automake cmake boost libevent librsvg qt@5`<br>
 **boost version is 1.78.0 at the time this doc was created**
 
 build for x64 on BigSur -<br>
