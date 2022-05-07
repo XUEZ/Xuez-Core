@@ -1,8 +1,9 @@
-sudo apt install docker.io bash
-sudo usermod -a -G docker dave
+### instal docker
+`sudo apt install docker.io bash`<br>
+`sudo usermod -a -G docker $(who)`<br>
 
-## reload users/group
-sudo su $(who)
+### reload users/group
+`sudo su $(who)`
 
 git clone https://github.com/xuez/Xuez-Core.git && cd Xuez-Core
 
