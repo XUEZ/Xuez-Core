@@ -1,7 +1,0 @@
-[main]
-host = https://www.transifex.com
-
-[xuez.qt-translation-021x]
-file_filter = src/qt/locale/xuez_<lang>.ts
-source_file = src/qt/locale/xuez_en.ts
-source_lang = en
