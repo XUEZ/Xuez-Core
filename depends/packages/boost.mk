@@ -29,7 +29,7 @@ endef
 
 define $(package)_preprocess_cmds
   echo "using $($(package)_toolset_$(host_os)) : : $($(package)_cxx) : <cflags>\"$($(package)_cflags)\" <cxxflags>\"$($(package)_cxxflags)\" <compileflags>\"$($(package)_cppflags)\" <linkflags>\"$($(package)_ldflags)\" <archiver>\"$($(package)_ar)\" <striper>\"$(host_STRIP)\"  <ranlib>\"$(host_RANLIB)\" <rc>\"$(host_WINDRES)\" : ;" > user-config.jam && \
-  cd tools/build/src/engine && CXX="$($(package)_cxx)" CXXFLAGS="$($(package)_cxxflags)" ./build.sh "$($(package)_toolset_$(host_os))" && \
+  cd tools/build/src/engine && ./build.sh "$($(package)_toolset_$(host_os))" && \
   mkdir -p "$($(package)_staging_prefix_dir)"/bin/ && cp b2 "$($(package)_staging_prefix_dir)"/bin/b2
 endef
 
