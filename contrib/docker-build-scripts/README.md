@@ -1,9 +1,4 @@
-### Install Docker
-`sudo apt install docker.io bash`<br>
-`sudo usermod -a -G docker $(who)`<br>
-
-### reload users/group
-`sudo su $(who)`
+### Install Docker, follow the instructions https://docs.docker.com/get-docker/
 
 ### Grab the code
 `git clone https://github.com/xuez/Xuez-Core.git && cd Xuez-Core`<br>
@@ -12,14 +7,13 @@ or<br>
 
 ### Build scripts are:
 `bash contrib/docker-build-scripts/build_linux_64.sh` <i>will build the Linux x64 version</i><br>
-`contrib/docker-build-scripts/build_apk_32.sh`<br>
-`contrib/docker-build-scripts/build_apk_64.sh`<br>
-`contrib/docker-build-scripts/build_apk_64x86.sh`<br>
-`contrib/docker-build-scripts/build_ARM_linux_32.sh` <i>Raspberry Pi and other SOCs with 32bit OS</i><br>
-`contrib/docker-build-scripts/build_ARM_linux_64.sh` <i>Raspberry Pi and other SOCs with 64bit OS</i><br>
-`contrib/docker-build-scripts/build_linux_64.sh`<br>
-`contrib/docker-build-scripts/build_Win_32.sh`<br>
-`contrib/docker-build-scripts/build_Win_64.sh`<br>
+`bash contrib/docker-build-scripts/build_apk_32.sh`<br>
+`bash contrib/docker-build-scripts/build_apk_64.sh`<br>
+`bash contrib/docker-build-scripts/build_apk_64x86.sh`<br>
+`bash contrib/docker-build-scripts/build_ARM_linux_32.sh` <i>Raspberry Pi and other SOCs with 32bit OS</i><br>
+`bash contrib/docker-build-scripts/build_ARM_linux_64.sh` <i>Raspberry Pi and other SOCs with 64bit OS</i><br>
+`bash contrib/docker-build-scripts/build_Win_32.sh`<br>
+`bash contrib/docker-build-scripts/build_Win_64.sh`<br>
 
 ### macOS build
 #### Use homebrew, and BigSur
