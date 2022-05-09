@@ -55,7 +55,7 @@ if [[ -z $(docker container ls --all | grep "$CONTAINER_NAME") ]]; then
 	# Create folders that are mounted into the docker
 	mkdir -p "${CCACHE_DIR}"
 	mkdir -p "${PREVIOUS_RELEASES_DIR}"
-	env | grep -E '^(BITCOIN_CONFIG|BASE_|QEMU_|CCACHE_|LC_ALL|BOOST_TEST_RANDOM|DEBIAN_FRONTEND|CONFIG_SHELL|(ASAN|LSAN|TSAN|UBSAN)_OPTIONS|PREVIOUS_RELEASES_DIR)' | tee /tmp/env
+	env | grep -E '^(BITCOIN_CONFIG|BASE_|QEMU_|CCACHE_|LC_ALL|BOOST_TEST_RANDOM|DEBIAN_FRONTEND|CONFIG_SHELL|PREVIOUS_RELEASES_DIR)' | tee /tmp/env
 	echo "Creating $DOCKER_NAME_TAG container to run in"
 	${CI_RETRY_EXE} docker pull "$DOCKER_NAME_TAG"
 
