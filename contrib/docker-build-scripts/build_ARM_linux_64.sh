@@ -24,7 +24,7 @@ export MAKEJOBS=${MAKEJOBS:--j4}
 export BASE_SCRATCH_DIR=${BASE_SCRATCH_DIR:-$BASE_ROOT_DIR/ci/scratch}
 export HOST=${HOST:-$("$BASE_ROOT_DIR/depends/config.guess")}
 export CONTAINER_NAME=xuez_build
-export DOCKER_NAME_TAG=ubuntu:18.04
+export DOCKER_NAME_TAG=ubuntu:20.04
 export DEBIAN_FRONTEND=noninteractive
 export CCACHE_SIZE=${CCACHE_SIZE:-100M}
 export CCACHE_TEMPDIR=${CCACHE_TEMPDIR:-/tmp/.ccache-temp}
@@ -55,16 +55,7 @@ if [[ -z $(docker container ls --all | grep "$CONTAINER_NAME") ]]; then
 	# Create folders that are mounted into the docker
 	mkdir -p "${CCACHE_DIR}"
 	mkdir -p "${PREVIOUS_RELEASES_DIR}"
-
-	export ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
-	export LSAN_OPTIONS="suppressions=${BASE_ROOT_DIR}/test/sanitizer_suppressions/lsan"
-	export TSAN_OPTIONS="suppressions=${BASE_ROOT_DIR}/test/sanitizer_suppressions/tsan:halt_on_error=1:log_path=${BASE_SCRATCH_DIR}/sanitizer-output/tsan"
-	export UBSAN_OPTIONS="suppressions=${BASE_ROOT_DIR}/test/sanitizer_suppressions/ubsan:print_stacktrace=1:halt_on_error=1:report_error_type=1"
-	env | grep -E '^(BITCOIN_CONFIG|BASE_|QEMU_|CCACHE_|LC_ALL|BOOST_TEST_RANDOM|DEBIAN_FRONTEND|CONFIG_SHELL|(ASAN|LSAN|TSAN|UBSAN)_OPTIONS|PREVIOUS_RELEASES_DIR)' | tee /tmp/env
-	if [[ $BITCOIN_CONFIG = *--with-sanitizers=*address* ]]; then # If ran with (ASan + LSan), Docker needs access to ptrace (https://github.com/google/sanitizers/issues/764)
-	  DOCKER_ADMIN="--cap-add SYS_PTRACE"
-	fi
-
+	env | grep -E '^(BITCOIN_CONFIG|BASE_|QEMU_|CCACHE_|LC_ALL|BOOST_TEST_RANDOM|DEBIAN_FRONTEND|CONFIG_SHELL|PREVIOUS_RELEASES_DIR)' | tee /tmp/env
 	echo "Creating $DOCKER_NAME_TAG container to run in"
 	${CI_RETRY_EXE} docker pull "$DOCKER_NAME_TAG"
 
