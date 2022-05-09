@@ -39,9 +39,18 @@ CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-u
 `make -j4 && make deploy`
 
 ### Universal Build for macOS 10.14 or later using Big Sur for x64 and Montery for aarch64
-`make -C depends && ./autogen.sh`
-`./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking --prefix=$PWD/depends/aarch64-apple-darwin21.4.0 CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-command-line-argument"`
+`make -C depends && ./autogen.sh`<br>
+##### ARM
+`./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking \<br>
+--prefix=$PWD/depends/aarch64-apple-darwin21.4.0 \<br>
+CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-command-line-argument"`
+##### x64
+`./configure --disable-tests --disable-gui-tests --disable-bench --enable-reduce-exports --disable-dependency-tracking \<br>
+--prefix=$PWD/depends/x86_64-apple-darwin20.6.0 \<br>
+CXXFLAGS="-pipe -O2 -std=c++17 -Wno-unused-variable -Wno-unused-parameter -Wno-unused-command-line-argument"`
 
+### then for both
+`make && make deploy`
 #### lipo the (2) Xuex-Qt binaries together with
 `lipo Xuez-Qtarm Xuez-Qtx64 -create -output Xuez-Qt`
 
