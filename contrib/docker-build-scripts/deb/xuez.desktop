@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Xuez Wallet
+Icon=/usr/share/pixmaps/xuez.xpm
+Type=Application
+Categories=Internet;
+Exec=/usr/bin/xuez-qt
+Version=2.1.1
+Comment=Xuez Wallet
+Terminal=false
+Name[en_US]=Xuez Wallet
