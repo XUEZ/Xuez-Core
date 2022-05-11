@@ -102,7 +102,7 @@ MKDEBS () {
   tar xzf $BUILDHOST-xuez-gui-$VER.tgz -C $DEBPATH/usr/bin/
   sed -i 's/_package_/xuez-wallet/g' $DEBPATH/DEBIAN/control
   sed -i "s/_arch_/${ARCH}/g" $DEBPATH/DEBIAN/control
-  echo -e "Description: Xuez Core Wallet - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
+  echo -e "\nDescription: Xuez Core Wallet - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
   echo -e "Depends: libc6 (>= 2.27), libfontconfig1 (>= 2.12.6), libfreetype6 (>= 2.6), libgcc-s1 (>= 3.4), libstdc++6 (>= 7), libxcb-icccm4 (>= 0.4.1), libxcb-image0 (>= 0.2.1), libxcb-keysyms1 (>= 0.4.0), libxcb-randr0 (>= 1.3), libxcb-render-util0, libxcb-render0, libxcb-shape0, libxcb-shm0 (>= 1.10), libxcb-sync1, libxcb-xfixes0, libxcb-xinerama0, libxcb-xkb1, libxcb1 (>= 1.8), libxkbcommon-x11-0 (>= 0.5.0), libxkbcommon0 (>= 0.5.0)" >> $DEBPATH/DEBIAN/control
   dpkg-deb --build --root-owner-group $DEBPATH
   rm -rf $DEBPATH
@@ -117,7 +117,7 @@ MKCLIDEBS () {
   tar xzf $BUILDHOST-xuez-cli-$VER.tgz -C $DEBPATH/usr/bin/
   sed -i 's/_package_/xuez-cli/g' $DEBPATH/DEBIAN/control
   sed -i "s/_arch_/${ARCH}/g" $DEBPATH/DEBIAN/control
-  echo -e "Description: Xuez Core CLI tools - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
+  echo -e "\nDescription: Xuez Core CLI tools - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
   echo -e "Depends: libc6 (>= 2.29), libgcc-s1 (>= 3.0), libstdc++6 (>= 9)" >> $DEBPATH/DEBIAN/control
   dpkg-deb --build --root-owner-group $DEBPATH
   rm -rf $DEBPATH

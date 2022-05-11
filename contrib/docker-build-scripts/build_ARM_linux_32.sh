@@ -77,18 +77,18 @@ DOCKER_EXEC () {
 export -f DOCKER_EXEC
 
 COPYBINS () {
-  DOCKER_EXEC "arm-linux-gnueabihf-strip src/qt/xuez-qt && cp src/qt/xuez-qt . && tar czf $BUILDHOST-xuez-gui-v$VER.tgz xuez-qt && rm xuez-qt"
+  DOCKER_EXEC "arm-linux-gnueabihf-strip src/qt/xuez-qt && cp src/qt/xuez-qt . && tar czf $BUILDHOST-xuez-gui-$VER.tgz xuez-qt && rm xuez-qt"
   DOCKER_EXEC "arm-linux-gnueabihf-strip src/xuezd src/xuez-cli src/xuez-tx src/xuez-wallet && mv src/xuezd src/xuez-cli src/xuez-tx src/xuez-wallet . "
-  DOCKER_EXEC "tar czf $BUILDHOST-xuez-cli-v$VER.tgz xuezd xuez-cli xuez-tx xuez-wallet && rm xuezd xuez-cli xuez-tx xuez-wallet"
-  docker cp $CONTAINER_NAME:$BASE_ROOT_DIR/$BUILDHOST-xuez-gui-v$VER.tgz .
-  docker cp $CONTAINER_NAME:$BASE_ROOT_DIR/$BUILDHOST-xuez-cli-v$VER.tgz .
+  DOCKER_EXEC "tar czf $BUILDHOST-xuez-cli-$VER.tgz xuezd xuez-cli xuez-tx xuez-wallet && rm xuezd xuez-cli xuez-tx xuez-wallet"
+  docker cp $CONTAINER_NAME:$BASE_ROOT_DIR/$BUILDHOST-xuez-gui-$VER.tgz .
+  docker cp $CONTAINER_NAME:$BASE_ROOT_DIR/$BUILDHOST-xuez-cli-$VER.tgz .
   DOCKER_EXEC rm -rf \$\(ls $BASE_ROOT_DIR/*xuez*tgz\)
 }
 
 MKDEBS () {
   ARCH=$(dpkg --print-architecture)
   echo "Building DEB package for $ARCH..."
-  DEBPATH="xuez-wallet_${VER}_${ARCH}"
+  DEBPATH="xuez-wallet_${VER}_{$BUILDHOST}_${ARCH}"
   mkdir -p $DEBPATH/DEBIAN $DEBPATH/usr/bin $DEBPATH/usr/share/pixmaps $DEBPATH/usr/share/applications
   cp contrib/docker-build-scripts/deb/control $DEBPATH/DEBIAN/
   cp contrib/docker-build-scripts/deb/xuez.desktop $DEBPATH/usr/share/applications/
@@ -96,7 +96,7 @@ MKDEBS () {
   tar xzf $BUILDHOST-xuez-gui-$VER.tgz -C $DEBPATH/usr/bin/
   sed -i 's/_package_/xuez-wallet/g' $DEBPATH/DEBIAN/control
   sed -i "s/_arch_/${ARCH}/g" $DEBPATH/DEBIAN/control
-  echo -e "Description: Xuez Core Wallet - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
+  echo -e "\nDescription: Xuez Core Wallet - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
   echo -e "Depends: libc6 (>= 2.27), libfontconfig1 (>= 2.12.6), libfreetype6 (>= 2.6), libgcc-s1 (>= 3.4), libstdc++6 (>= 7), libxcb-icccm4 (>= 0.4.1), libxcb-image0 (>= 0.2.1), libxcb-keysyms1 (>= 0.4.0), libxcb-randr0 (>= 1.3), libxcb-render-util0, libxcb-render0, libxcb-shape0, libxcb-shm0 (>= 1.10), libxcb-sync1, libxcb-xfixes0, libxcb-xinerama0, libxcb-xkb1, libxcb1 (>= 1.8), libxkbcommon-x11-0 (>= 0.5.0), libxkbcommon0 (>= 0.5.0)" >> $DEBPATH/DEBIAN/control
   dpkg-deb --build --root-owner-group $DEBPATH
   rm -rf $DEBPATH
@@ -105,13 +105,13 @@ MKDEBS () {
 MKCLIDEBS () {
   ARCH=$(dpkg --print-architecture)
   echo "Building CLI DEB package for $ARCH..."
-  DEBPATH="xuez-cli_${VER}_${ARCH}"
+  DEBPATH="xuez-cli_${VER}_{$BUILDHOST}_${ARCH}"
   mkdir -p $DEBPATH/DEBIAN $DEBPATH/usr/bin
   cp contrib/docker-build-scripts/deb/control $DEBPATH/DEBIAN/
   tar xzf $BUILDHOST-xuez-cli-$VER.tgz -C $DEBPATH/usr/bin/
   sed -i 's/_package_/xuez-cli/g' $DEBPATH/DEBIAN/control
   sed -i "s/_arch_/${ARCH}/g" $DEBPATH/DEBIAN/control
-  echo -e "Description: Xuez Core CLI tools - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
+  echo -e "\nDescription: Xuez Core CLI tools - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
   echo -e "Depends: libc6 (>= 2.29), libgcc-s1 (>= 3.0), libstdc++6 (>= 9)" >> $DEBPATH/DEBIAN/control
   dpkg-deb --build --root-owner-group $DEBPATH
   rm -rf $DEBPATH
@@ -139,5 +139,3 @@ fi
 DOCKER_EXEC "[[ ! -f configure ]] && ./autogen.sh"
 DOCKER_EXEC "[[ -f configure ]] && ./configure $BITCOIN_CONFIG --prefix=$DEPENDS_DIR/$BUILDHOST"
 DOCKER_EXEC "make $MAKEJOBS" && COPYBINS && MKDEBS && MKCLIDEBS
-
-
