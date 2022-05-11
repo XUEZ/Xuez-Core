@@ -93,6 +93,8 @@ COPYBINS () {
 
 MKDEBS () {
   ARCH=$(dpkg --print-architecture)
+  BASE_ROOT_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../../ >/dev/null 2>&1 && pwd )
+  VER=$(head -n 20 $BASE_ROOT_DIR/configure.ac | grep -E 'define\(_CLIENT_VERSION_(MAJOR|MINOR|REVISION|BUILD)' |  grep -ohE '[0-9]' | tr -d '[:space:]')
   echo "Building DEB package for $ARCH..."
   mkdir -p xuez-wallet_$VER_$ARCH/DEBIAN xuez-wallet_$VER_$ARCH/usr/bin
   mkdir xuez-wallet_$VER_$ARCH/usr/share/applications xuez-wallet_$VER_$ARCH/usr/share/pixmaps
