@@ -85,6 +85,38 @@ COPYBINS () {
   DOCKER_EXEC rm -rf \$\(ls $BASE_ROOT_DIR/*xuez*tgz\)
 }
 
+MKDEBS () {
+  ARCH=$(dpkg --print-architecture)
+  echo "Building DEB package for $ARCH..."
+  DEBPATH="xuez-wallet_${VER}_${ARCH}"
+  mkdir -p $DEBPATH/DEBIAN $DEBPATH/usr/bin $DEBPATH/usr/share/pixmaps $DEBPATH/usr/share/applications
+  cp contrib/docker-build-scripts/deb/control $DEBPATH/DEBIAN/
+  cp contrib/docker-build-scripts/deb/xuez.desktop $DEBPATH/usr/share/applications/
+  cp contrib/docker-build-scripts/deb/xuez.xpm $DEBPATH/usr/share/pixmaps
+  tar xzf $BUILDHOST-xuez-gui-$VER.tgz -C $DEBPATH/usr/bin/
+  sed -i 's/_package_/xuez-wallet/g' $DEBPATH/DEBIAN/control
+  sed -i "s/_arch_/${ARCH}/g" $DEBPATH/DEBIAN/control
+  echo -e "Description: Xuez Core Wallet - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
+  echo -e "Depends: libc6 (>= 2.27), libfontconfig1 (>= 2.12.6), libfreetype6 (>= 2.6), libgcc-s1 (>= 3.4), libstdc++6 (>= 7), libxcb-icccm4 (>= 0.4.1), libxcb-image0 (>= 0.2.1), libxcb-keysyms1 (>= 0.4.0), libxcb-randr0 (>= 1.3), libxcb-render-util0, libxcb-render0, libxcb-shape0, libxcb-shm0 (>= 1.10), libxcb-sync1, libxcb-xfixes0, libxcb-xinerama0, libxcb-xkb1, libxcb1 (>= 1.8), libxkbcommon-x11-0 (>= 0.5.0), libxkbcommon0 (>= 0.5.0)" >> $DEBPATH/DEBIAN/control
+  dpkg-deb --build --root-owner-group $DEBPATH
+  rm -rf $DEBPATH
+}
+
+MKCLIDEBS () {
+  ARCH=$(dpkg --print-architecture)
+  echo "Building CLI DEB package for $ARCH..."
+  DEBPATH="xuez-cli_${VER}_${ARCH}"
+  mkdir -p $DEBPATH/DEBIAN $DEBPATH/usr/bin
+  cp contrib/docker-build-scripts/deb/control $DEBPATH/DEBIAN/
+  tar xzf $BUILDHOST-xuez-cli-$VER.tgz -C $DEBPATH/usr/bin/
+  sed -i 's/_package_/xuez-cli/g' $DEBPATH/DEBIAN/control
+  sed -i "s/_arch_/${ARCH}/g" $DEBPATH/DEBIAN/control
+  echo -e "Description: Xuez Core CLI tools - https://xuezcoin.com" >> $DEBPATH/DEBIAN/control
+  echo -e "Depends: libc6 (>= 2.29), libgcc-s1 (>= 3.0), libstdc++6 (>= 9)" >> $DEBPATH/DEBIAN/control
+  dpkg-deb --build --root-owner-group $DEBPATH
+  rm -rf $DEBPATH
+}
+
 DOCKER_EXEC echo "Free disk space:"
 DOCKER_EXEC df -h
 
@@ -101,17 +133,6 @@ fi
 DEP_OPTS=""
 BUILDHOST="aarch64-linux-gnu"
 
-#i686-pc-linux-gnu for Linux 32 bit
-#x86_64-pc-linux-gnu for x86 Linux
-#x86_64-w64-mingw32 for Win64
-#x86_64-apple-darwin16 for macOS
-#arm-linux-gnueabihf for Linux ARM 32 bit
-#aarch64-linux-gnu for Linux ARM 64 bit
-#armv7a-linux-android for Android ARM 32 bit
-#aarch64-linux-android for Android ARM 64 bit
-#i686-linux-android for Android x86 32 bit
-#x86_64-linux-android for Android x86 64 bit
-
 MAKE_COMMAND="make $MAKEJOBS -C depends"
 DOCKER_EXEC "$MAKE_COMMAND" HOST=$BUILDHOST
 
@@ -121,4 +142,4 @@ if [ "$1" == "clean" ]; then
 fi
 DOCKER_EXEC "[[ ! -f configure ]] && ./autogen.sh"
 DOCKER_EXEC "[[ -f configure ]] && ./configure $BITCOIN_CONFIG --prefix=$DEPENDS_DIR/$BUILDHOST"
-DOCKER_EXEC "make $MAKEJOBS" && COPYBINS
+DOCKER_EXEC "make $MAKEJOBS" && COPYBINS && MKDEBS && MKCLIDEBS
