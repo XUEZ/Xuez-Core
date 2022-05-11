@@ -76,15 +76,36 @@ export P_CI_DIR="$PWD"
 DOCKER_EXEC () {
   docker exec $CONTAINER_NAME bash -c "export PATH=$BASE_SCRATCH_DIR/bins/:\$PATH && cd $P_CI_DIR && $*"
 }
+
 export -f DOCKER_EXEC
 
 COPYBINS () {
+  echo "Stripping built binary files..."
   DOCKER_EXEC "strip src/qt/xuez-qt && cp src/qt/xuez-qt . && tar czf $BUILDHOST-xuez-gui-$VER.tgz xuez-qt && rm xuez-qt"
   DOCKER_EXEC "strip src/xuezd src/xuez-cli src/xuez-tx src/xuez-wallet && mv src/xuezd src/xuez-cli src/xuez-tx src/xuez-wallet . "
+  echo "Compressing built binary files..."
   DOCKER_EXEC "tar czf $BUILDHOST-xuez-cli-$VER.tgz xuezd xuez-cli xuez-tx xuez-wallet && rm xuezd xuez-cli xuez-tx xuez-wallet"
+  echo "Copying built binary files from docker container..."
   docker cp $CONTAINER_NAME:$BASE_ROOT_DIR/$BUILDHOST-xuez-gui-$VER.tgz .
   docker cp $CONTAINER_NAME:$BASE_ROOT_DIR/$BUILDHOST-xuez-cli-$VER.tgz .
   DOCKER_EXEC rm -rf \$\(ls $BASE_ROOT_DIR/*xuez*tgz\)
+}
+
+MKDEBS () {
+  ARCH=$(dpkg --print-architecture)
+  echo "Building DEB package for $ARCH..."
+  mkdir -p xuez-wallet_$VER_$ARCH/DEBIAN xuez-wallet_$VER_$ARCH/usr/bin
+  mkdir xuez-wallet_$VER_$ARCH/usr/share/applications xuez-wallet_$VER_$ARCH/usr/share/pixmaps
+  cp contrib/docker-build-scripts/deb/control xuez-wallet_$VER_$ARCH/DEBIAN/
+  cp contrib/docker-build-scripts/deb/xuez.desktop xuez-wallet_$VER_$ARCH/usr/share/applications/
+  cp contrib/docker-build-scripts/deb/xuez.xpm xuez-wallet_$VER_$ARCH/usr/share/pixmaps
+  tar xzf $BUILDHOST-xuez-gui-$VER.tgz -C xuez-wallet_$VER_$ARCH/usr/bin/
+  sed -i 's/_package_/xuez-wallet/g' xuez-wallet_$VER_$ARCH/DEBIAN/control
+  sed -i 's/_arch_/$ARCH/g' xuez-wallet_$VER_$ARCH/DEBIAN/control
+  sed -i 's/_desc_/Xuez Core Wallet - https://xuezcoin.com/g' xuez-wallet_$VER_$ARCH/DEBIAN/control
+  echo "Depends: libc6 (>= 2.27), libfontconfig1 (>= 2.12.6), libfreetype6 (>= 2.6), libgcc-s1 (>= 3.4), libstdc++6 (>= 7), libxcb-icccm4 (>= 0.4.1), libxcb-image0 (>= 0.2.1), libxcb-keysyms1 (>= 0.4.0), libxcb-randr0 (>= 1.3), libxcb-render-util0, libxcb-render0, libxcb-shape0, libxcb-shm0 (>= 1.10), libxcb-sync1, libxcb-xfixes0, libxcb-xinerama0, libxcb-xkb1, libxcb1 (>= 1.8), libxkbcommon-x11-0 (>= 0.5.0), libxkbcommon0 (>= 0.5.0)" > xuez-wallet_$VER_$ARCH/DEBIAN/control
+  dpkg-deb --build --root-owner-group xuez-wallet_$VER_$ARCH
+  rm -rf xuez-wallet_$VER_$ARCH
 }
 
 DOCKER_EXEC echo "Free disk space:"
@@ -96,23 +117,8 @@ ${CI_RETRY_EXE} DOCKER_EXEC apt-get install --no-install-recommends --no-upgrade
 echo "Create/syncing $BASE_ROOT_DIR"
 DOCKER_EXEC rsync -a /ro_base/ $BASE_ROOT_DIR
 
-if [[ ! -d "${DEPENDS_DIR}/SDKs ${DEPENDS_DIR}/sdk-sources" ]]; then
-  DOCKER_EXEC mkdir -p ${DEPENDS_DIR}/SDKs ${DEPENDS_DIR}/sdk-sources
-fi
-
 DEP_OPTS=""
 BUILDHOST="x86_64-pc-linux-gnu"
-
-#i686-pc-linux-gnu for Linux 32 bit
-#x86_64-pc-linux-gnu for x64 Linux
-#x86_64-w64-mingw32 for Win64
-#x86_64-apple-darwin16 for macOS
-#arm-linux-gnueabihf for Linux ARM 32 bit
-#aarch64-linux-gnu for Linux ARM 64 bit
-#armv7a-linux-android for Android ARM 32 bit
-#aarch64-linux-android for Android ARM 64 bit
-#i686-linux-android for Android x86 32 bit
-#x86_64-linux-android for Android x86 64 bit
 
 MAKE_COMMAND="make $MAKEJOBS -C depends"
 DOCKER_EXEC "$MAKE_COMMAND" HOST=$BUILDHOST
@@ -123,4 +129,4 @@ if [ "$1" == "clean" ]; then
 fi
 DOCKER_EXEC "[[ ! -f configure ]] && ./autogen.sh"
 DOCKER_EXEC "[[ -f configure ]] && ./configure $BITCOIN_CONFIG --prefix=$DEPENDS_DIR/$BUILDHOST"
-DOCKER_EXEC "make $MAKEJOBS" && COPYBINS
+DOCKER_EXEC "make $MAKEJOBS" && COPYBINS && MKDEBS
