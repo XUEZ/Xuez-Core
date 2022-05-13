@@ -86,7 +86,7 @@ COPYBINS () {
 }
 
 MKDEBS () {
-  ARCH=$(dpkg --print-architecture)
+  ARCH="aarch64"
   echo "Building DEB package for $ARCH..."
   DEBPATH="xuez-wallet_${VER}_{$BUILDHOST}_${ARCH}"
   mkdir -p $DEBPATH/DEBIAN $DEBPATH/usr/bin $DEBPATH/usr/share/pixmaps $DEBPATH/usr/share/applications
@@ -103,7 +103,7 @@ MKDEBS () {
 }
 
 MKCLIDEBS () {
-  ARCH=$(dpkg --print-architecture)
+  ARCH="aarch64"
   echo "Building CLI DEB package for $ARCH..."
   DEBPATH="xuez-cli_${VER}_{$BUILDHOST}_${ARCH}"
   mkdir -p $DEBPATH/DEBIAN $DEBPATH/usr/bin
